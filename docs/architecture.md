@@ -36,6 +36,11 @@ in parallel by different team members.
 └─────────────────────────────┘
 
 ## Data Flow (Prediction Request)
+## Integration Status
+The Node ↔ Flask integration described below has been built and tested end-to-end. 
+A POST request to Node's /api/predict correctly forwards to Flask's /predict, 
+returns the full prediction response (probability, readiness score, strengths, 
+weaknesses with labels and suggestions), unmodified through the chain.
 1. Student fills placement details form in React frontend
 2. Frontend sends form data to Node/Express backend
 3. Node/Express forwards this data as JSON to Flask API (`POST /predict`)
