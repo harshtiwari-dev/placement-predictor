@@ -4,12 +4,14 @@ const mongoose = require("mongoose");
 const dotenv = require('dotenv')
 dotenv.config()
 const authRoutes = require("./routes/auth");
+const predictRoutes = require("./routes/predict");
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api", predictRoutes);
 
 mongoose.connect(process.env.DB_URI)
   .then(() => console.log("MongoDB connected"))
