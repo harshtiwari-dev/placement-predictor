@@ -33,3 +33,36 @@ Flask API (POST /predict) using axios, and returns the response unchanged. Teste
 end-to-end: request sent to Node correctly reaches Flask, runs through the trained 
 model and SHAP explainer, and returns the full response (probability, readiness 
 score, strengths, weaknesses) back through Node with no data loss or transformation.
+
+## Dataset switch — MBA to CSE-relevant placement data
+The original dataset ("Factors Affecting Campus Placement," benroshan, 215 rows) was 
+MBA-specific (fields like mba_p, specialisation_Mkt&HR), which didn't reflect the 
+target users of this project (CSE/engineering students) and is a widely-used 
+tutorial dataset, weakening claims of an original contribution. Switched to the 
+"College Student Placement Factors Dataset" (sahilislam007, Kaggle) — 10,000 rows 
+with CSE-relevant features: IQ, Prev_Sem_Result, CGPA, Academic_Performance, 
+Internship_Experience, Extra_Curricular_Score, Communication_Skills, 
+Projects_Completed.
+
+## Model comparison — synthetic dataset artifact
+Random Forest and XGBoost both achieved exactly 100% accuracy and 1.0 ROC-AUC on 
+the new dataset, while Logistic Regression achieved 90.4%. Investigation ruled out 
+data leakage (no duplicate rows between train/test, no single feature with 
+correlation above 0.33 to the target). This pattern strongly suggests the dataset's 
+placement labels were generated via a deterministic rule/formula (consistent with 
+it being labeled a "Realistic Simulation" dataset by its source), which tree-based 
+models can learn exactly, while Logistic Regression's linear decision boundary 
+cannot fully capture. Given this, Logistic Regression was retained as the deployed 
+model — its more realistic, non-perfect performance is more representative of 
+real-world placement prediction, and perfect classifier performance would be 
+scientifically indefensible in a viva or research setting.
+
+## Dataset provenance — search for a "real" (non-synthetic) alternative
+Investigated whether a genuinely real-world (non-synthetic) placement dataset with 
+CSE-relevant features exists publicly. Found that real student outcome data is 
+rarely released publicly due to sensitivity, and even well-known datasets in this 
+space (e.g., the original benroshan MBA dataset) have unclear provenance. Decided 
+to proceed with the current dataset, since its features are appropriate, its 
+limitations are well understood and documented, and switching further offered no 
+verified improvement over further investigation time spent.
+

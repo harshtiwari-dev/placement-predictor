@@ -11,39 +11,26 @@ explainer = joblib.load("explainer.pkl")
 feature_columns = joblib.load("feature_columns.pkl")
 
 FEATURE_LABELS = {
-    "ssc_p": "10th Percentage",
-    "hsc_p": "12th Percentage",
-    "degree_p": "Degree Percentage",
-    "etest_p": "Employability Test Score",
-    "mba_p": "MBA Percentage",
-    "gender_M": "Gender (Male)",
-    "ssc_b_Others": "10th Board (Others)",
-    "hsc_b_Others": "12th Board (Others)",
-    "hsc_s_Commerce": "12th Stream (Commerce)",
-    "hsc_s_Science": "12th Stream (Science)",
-    "degree_t_Others": "Degree Type (Others)",
-    "degree_t_Sci&Tech": "Degree Type (Science & Tech)",
-    "workex_Yes": "Work Experience",
-    "specialisation_Mkt&HR": "Specialisation (Marketing & HR)"
+    "IQ": "IQ Score",
+    "Prev_Sem_Result": "Previous Semester Result",
+    "CGPA": "CGPA",
+    "Academic_Performance": "Academic Performance",
+    "Extra_Curricular_Score": "Extra-Curricular Score",
+    "Communication_Skills": "Communication Skills",
+    "Projects_Completed": "Projects Completed",
+    "Internship_Experience_Yes": "Internship Experience"
 }
 
 RECOMMENDATION_TEMPLATES = {
-    "ssc_p": "Your 10th percentage is a strong influence — improving academic consistency early on correlates with better placement outcomes.",
-    "hsc_p": "Your 12th percentage is affecting your prediction — a stronger foundation here is associated with higher placement probability.",
-    "degree_p": "Your degree percentage matters significantly — maintaining strong academic performance in your core degree improves your chances.",
-    "etest_p": "Your employability test score has some influence — practicing aptitude and employability tests could help.",
-    "mba_p": "Your MBA percentage is a factor — but note its effect can vary depending on your overall academic profile.",
-    "workex_Yes": "Lack of work experience is affecting your prediction — consider taking up an internship to strengthen your profile.",
-    "gender_M": "This factor reflects a pattern in historical data, not a controllable skill — focus on the other factors listed.",
-    "hsc_s_Commerce": "Your 12th stream is a minor factor in this prediction.",
-    "hsc_s_Science": "Your 12th stream is a minor factor in this prediction.",
-    "degree_t_Others": "Your degree type is a minor factor in this prediction.",
-    "degree_t_Sci&Tech": "Your degree type is a minor factor in this prediction.",
-    "specialisation_Mkt&HR": "Your MBA specialisation is a minor factor in this prediction.",
-    "ssc_b_Others": "Your 10th board is a minor factor in this prediction.",
-    "hsc_b_Others": "Your 12th board is a minor factor in this prediction."
+    "IQ": "Your IQ score is influencing your prediction — this reflects general aptitude, consider practicing logical reasoning and aptitude tests.",
+    "Prev_Sem_Result": "Your previous semester result is a factor — maintaining consistent academic performance each semester helps.",
+    "CGPA": "Your CGPA is significantly affecting your prediction — maintaining strong academic performance improves your chances.",
+    "Academic_Performance": "Your overall academic performance is a factor — focus on consistent grades across subjects.",
+    "Extra_Curricular_Score": "Your extra-curricular involvement is a minor factor — participating in more activities could help slightly.",
+    "Communication_Skills": "Your communication skills are a major factor — practicing public speaking, group discussions, and interviews can significantly help.",
+    "Projects_Completed": "The number of projects you've completed is affecting your prediction — building more hands-on projects strengthens your profile.",
+    "Internship_Experience_Yes": "Lack of internship experience is affecting your prediction — consider taking up an internship to strengthen your profile."
 }
-
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()

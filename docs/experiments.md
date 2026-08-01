@@ -68,3 +68,54 @@ Verified model discriminates correctly across the full spectrum, not just high s
   predictor in the SHAP summary plot
 - Confirms the model and recommendation engine behave coherently for both strong and 
   weak student profiles, not just a bias toward predicting "Placed"
+
+## Dataset v2 — College Student Placement Factors (CSE-relevant)
+
+Switched to a larger, CSE-relevant dataset (10,000 rows) after determining the 
+original MBA-specific dataset was a poor fit for the project's target users. 
+See decisions.md for full rationale.
+
+### Dataset
+- Source: Kaggle "College Student Placement Factors Dataset" (sahilislam007)
+- 10,000 rows, 8 features + target
+- Target: Placement (Yes/No) — 1,659 Placed / 8,341 Not Placed
+- Features: IQ, Prev_Sem_Result, CGPA, Academic_Performance, Internship_Experience, 
+  Extra_Curricular_Score, Communication_Skills, Projects_Completed
+
+### Model Comparison
+
+| Model | Accuracy | ROC-AUC | Notes |
+|---|---|---|---|
+| Logistic Regression | 0.904 | 0.944 | Selected for deployment |
+| Random Forest | 1.00 | 1.00 | Suspiciously perfect — see decisions.md |
+| XGBoost | 1.00 | 1.00 | Suspiciously perfect — see decisions.md |
+
+### SHAP Explainability — Logistic Regression (v2)
+
+Global feature importance (see shap_summary_v2.png), ranked by impact:
+1. **Communication_Skills** — strongest predictor; high values strongly push toward placement
+2. **CGPA** — second strongest, same directional pattern
+3. **IQ** — high influence, widest spread of any feature
+4. **Projects_Completed** — moderate influence
+5. Prev_Sem_Result, Extra_Curricular_Score, Academic_Performance — minimal influence
+6. **Internship_Experience_Yes** — near-zero influence, notably lower than expected given common assumptions about internship importance
+
+### Example — Individual Prediction (Student index 0, test set)
+- Predicted placement probability: 55.1%
+- Top influencing factors: IQ (strong positive), Communication Skills (negative for 
+  this student), Projects Completed (positive), CGPA (slightly negative), 
+  Extra-Curricular Score (minimal)
+
+  ### Class imbalance investigation
+Tested class_weight="balanced" for Logistic Regression, Random Forest, and XGBoost 
+to address the 16.6%/83.4% class imbalance. Results:
+- Balancing had no effect on Random Forest/XGBoost (still 100% accuracy) — confirms 
+  the earlier finding that near-perfect scores stem from the dataset's deterministic 
+  synthetic generation, not class imbalance.
+- Balanced Logistic Regression improved recall on the minority class (0.61 → 0.90) 
+  but reduced precision (0.76 → 0.53) and overall accuracy (0.904 → 0.852), with 
+  near-identical ROC-AUC (0.9442 vs 0.9443).
+- Decision: retained standard (unbalanced) Logistic Regression, since the product 
+  displays continuous probability/readiness scores rather than binary classification — 
+  better-calibrated probabilities matter more here than adjusting the decision 
+  threshold for class balance.
