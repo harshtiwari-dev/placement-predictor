@@ -6,6 +6,21 @@ Two-backend architecture: Node.js/Express handles application logic (auth, data 
 Flask handles ML inference. This separation lets ML and full-stack development happen 
 in parallel by different team members.
 
+## Integration Status
+The Node ↔ Flask integration has been built and tested end-to-end. A POST request 
+to Node's /api/predict correctly forwards to Flask's /predict, returns the full 
+prediction response (probability, readiness score, strengths, weaknesses with labels 
+and suggestions), unmodified through the chain.
+
+Prediction requests are now protected by JWT authentication (via middleware) and 
+results are persisted to MongoDB in a `predictions` collection, linked to the 
+authenticated user via a MongoDB ObjectId reference. Verified in Atlas that saved 
+predictions correctly reference the user who made them.
+
+Authentication (signup/login) is fully implemented and tested: passwords are hashed 
+with bcrypt, sessions use JWT tokens (7-day expiry), and protected routes verify 
+tokens via middleware before processing requests.
+
 ## Architecture Diagram
 ┌─────────────────────────────────────────────────────────┐
 │ FRONTEND (React) │
@@ -15,17 +30,18 @@ in parallel by different team members.
 ▼
 ┌─────────────────────────────────────────────────────────┐
 │ NODE.JS + EXPRESS (Main Backend) │
-│ - User auth (student/admin) │
+│ - User auth (student/admin) — JWT + bcrypt, implemented │
 │ - CRUD: profile, resume, skills, internships │
 │ - Stores/fetches data from MongoDB │
 │ - Forwards prediction requests to ML API │
+│ - Saves predictions linked to authenticated user │
 └──────────┬──────────────────────────────┬─────────────────┘
 │ │
 ▼ ▼
 ┌─────────────────────┐ ┌─────────────────────────────┐
 │ MongoDB │ │ FLASK API (Python, ML) │
-│ student profiles, │ │ Endpoint: POST /predict │
-│ predictions history │ │ Port: 5000 (local dev) │
+│ users, │ │ Endpoint: POST /predict │
+│ predictions │ │ Port: 5000 (local dev) │
 └─────────────────────┘ └───────────┬───────────────────┘
 ▼
 ┌─────────────────────────────┐
@@ -36,22 +52,21 @@ in parallel by different team members.
 └─────────────────────────────┘
 
 ## Data Flow (Prediction Request)
-## Integration Status
-The Node ↔ Flask integration described below has been built and tested end-to-end. 
-A POST request to Node's /api/predict correctly forwards to Flask's /predict, 
-returns the full prediction response (probability, readiness score, strengths, 
-weaknesses with labels and suggestions), unmodified through the chain.
-1. Student fills placement details form in React frontend
-2. Frontend sends form data to Node/Express backend
-3. Node/Express forwards this data as JSON to Flask API (`POST /predict`)
-4. Flask API converts JSON into a DataFrame matching the trained model's feature columns
-5. Logistic Regression model returns a placement probability
-6. SHAP explainer computes per-student feature impact (which factors helped/hurt)
-7. Flask API returns JSON: `probability`, `readiness_score`, `strengths[]`, `weaknesses[]`
+1. Student logs in via React frontend, receives a JWT token
+2. Student fills placement details form in React frontend
+3. Frontend sends form data to Node/Express backend's `/api/predict`, with the JWT 
+   token in the Authorization header
+4. Node's auth middleware verifies the token before proceeding
+5. Node/Express forwards the form data as JSON to Flask API (`POST /predict`)
+6. Flask API converts JSON into a DataFrame matching the trained model's feature columns
+7. Logistic Regression model returns a placement probability
+8. SHAP explainer computes per-student feature impact (which factors helped/hurt)
+9. Flask API returns JSON: `probability`, `readiness_score`, `strengths[]`, `weaknesses[]`
    (exact format documented in `api-contract.md`)
-8. Node/Express receives this response, optionally saves it to MongoDB as prediction history
-9. Node/Express sends the result to React frontend
-10. React frontend displays probability, readiness score, and recommendations to the student
+10. Node/Express receives this response and saves it to MongoDB as a `predictions` 
+    document, linked to the authenticated user's ID
+11. Node/Express sends the result to React frontend
+12. React frontend displays probability, readiness score, and recommendations to the student
 
 ## ML Pipeline (Offline / Model Preparation)
 Separate from the live prediction flow — this is how the model itself was built:
@@ -71,17 +86,16 @@ recommend.py — convert SHAP output into readiness score + strengths/weaknesses
 ↓
 app.py — wrap trained model + SHAP explainer in a Flask API for live use
 
-
 ## Tech Stack
 
-| Layer | Technology | Owner |
-|---|---|---|
-| Frontend | React, Tailwind CSS | Team |
-| Application Backend | Node.js, Express | Team |
-| Database | MongoDB | Team |
-| ML Model | Python, pandas, scikit-learn | ML Lead |
-| Explainability | SHAP | ML Lead |
-| ML API | Flask | ML Lead |
+| Layer | Technology | Status | Owner |
+|---|---|---|---|
+| Frontend | React, Tailwind CSS | Not started | Team |
+| Application Backend | Node.js, Express | Complete (auth, predict route) | ML Lead + Backend |
+| Database | MongoDB (Atlas) | Complete (users, predictions) | ML Lead + Backend |
+| ML Model | Python, pandas, scikit-learn | Complete | ML Lead |
+| Explainability | SHAP | Complete | ML Lead |
+| ML API | Flask | Complete | ML Lead |
 
 ## Why Two Backends
 Node/Express and Flask serve different purposes and are not redundant:
@@ -101,3 +115,12 @@ documented API contract using mock data even before the Flask API is complete.
 - Features: 14 (after encoding), covering academic percentages, board, stream, 
   work experience, specialization, gender
 - Explainability: SHAP (Explainer, applied per-prediction at inference time)
+
+## Auth & Data Model
+- **User model**: name, email (unique), hashed password (bcrypt, 10 salt rounds), 
+  role (student/admin), createdAt
+- **Prediction model**: user (ObjectId reference to User), inputData, probability, 
+  readinessScore, strengths, weaknesses, createdAt
+- JWT tokens signed with a secret stored in `.env` (excluded from git), 7-day expiry
+- Protected routes verified via `middleware/auth.js`, which checks the 
+  `Authorization: Bearer <token>` header
