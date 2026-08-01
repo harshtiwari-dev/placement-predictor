@@ -1,24 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
-import shap
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+import joblib
 
 app = Flask(__name__)
 CORS(app)
 
-df = pd.read_csv("placement_data_cleaned.csv")
-X = df.drop(columns=["status"])
-y = df["status"]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-model_lr = LogisticRegression(max_iter=1000)
-model_lr.fit(X_train, y_train)
-
-explainer = shap.Explainer(model_lr, X_train)
-feature_columns = X.columns.tolist()
+model_lr = joblib.load("model.pkl")
+explainer = joblib.load("explainer.pkl")
+feature_columns = joblib.load("feature_columns.pkl")
 
 FEATURE_LABELS = {
     "ssc_p": "10th Percentage",
