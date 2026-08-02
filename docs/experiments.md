@@ -119,3 +119,37 @@ to address the 16.6%/83.4% class imbalance. Results:
   displays continuous probability/readiness scores rather than binary classification — 
   better-calibrated probabilities matter more here than adjusting the decision 
   threshold for class balance.
+
+  ## Dataset v3 — Placement Prediction Dataset (ruchikakumbhar, Kaggle)
+
+Switched again after determining Dataset v2 (College Student Placement Factors) had 
+severe class imbalance (16.6% placed) causing unintuitively low scores for average 
+students. Evaluated three additional candidates before selecting this one — see 
+decisions.md for full comparison and rationale.
+
+### Dataset
+- Source: Kaggle "Placement Prediction Dataset" (ruchikakumbhar)
+- 10,000 rows, 11 features + target
+- Target: PlacementStatus — 5,803 Not Placed / 4,197 Placed (58%/42%, well-balanced)
+- Features: CGPA, Internships, Projects, Workshops/Certifications, AptitudeTestScore, 
+  SoftSkillsRating, ExtracurricularActivities, PlacementTraining, SSC_Marks, HSC_Marks
+- Verified: no duplicates, no missing values, correlations with target range 0.26-0.52 
+  (no single dominant feature, no leakage pattern)
+
+### Model Comparison
+
+| Model | Accuracy | ROC-AUC |
+|---|---|---|
+| Logistic Regression | 0.7945 | 0.877 | 
+| Logistic Regression (balanced) | 0.7905 | 0.877 |
+| Random Forest | 0.7815 | 0.867 |
+| XGBoost | 0.7785 | 0.858 |
+
+Logistic Regression selected — best on every metric, and class balancing had 
+negligible effect given the dataset's already-reasonable 58/42 class split.
+
+### SHAP Explainability (see shap_summary.png)
+Top predictors, in order: AptitudeTestScore (dominant), PlacementTraining, 
+ExtracurricularActivities, SoftSkillsRating, HSC_Marks, SSC_Marks, CGPA, Projects, 
+Workshops/Certifications, Internships. All features show clean, coherent directional 
+patterns (no mixed-signal noise), unlike the MBA dataset's mba_p feature in v1.

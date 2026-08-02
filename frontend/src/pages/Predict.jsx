@@ -3,20 +3,16 @@ import axios from "axios";
 
 function Predict() {
   const [formData, setFormData] = useState({
-    ssc_p: "",
-    hsc_p: "",
-    degree_p: "",
-    etest_p: "",
-    mba_p: "",
-    gender_M: "0",
-    ssc_b_Others: "0",
-    hsc_b_Others: "0",
-    hsc_s_Commerce: "0",
-    hsc_s_Science: "0",
-    degree_t_Others: "0",
-    "degree_t_Sci&Tech": "0",
-    workex_Yes: "0",
-    "specialisation_Mkt&HR": "0",
+    CGPA: "",
+    Internships: "0",
+    Projects: "0",
+    "Workshops/Certifications": "0",
+    AptitudeTestScore: "",
+    SoftSkillsRating: "2.5",
+    ExtracurricularActivities: "0",
+    PlacementTraining: "0",
+    SSC_Marks: "",
+    HSC_Marks: "",
   });
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -35,21 +31,16 @@ function Predict() {
     try {
       const token = localStorage.getItem("token");
       const payload = {
-        ...formData,
-        ssc_p: Number(formData.ssc_p),
-        hsc_p: Number(formData.hsc_p),
-        degree_p: Number(formData.degree_p),
-        etest_p: Number(formData.etest_p),
-        mba_p: Number(formData.mba_p),
-        gender_M: Number(formData.gender_M),
-        ssc_b_Others: Number(formData.ssc_b_Others),
-        hsc_b_Others: Number(formData.hsc_b_Others),
-        hsc_s_Commerce: Number(formData.hsc_s_Commerce),
-        hsc_s_Science: Number(formData.hsc_s_Science),
-        degree_t_Others: Number(formData.degree_t_Others),
-        "degree_t_Sci&Tech": Number(formData["degree_t_Sci&Tech"]),
-        workex_Yes: Number(formData.workex_Yes),
-        "specialisation_Mkt&HR": Number(formData["specialisation_Mkt&HR"]),
+        CGPA: Number(formData.CGPA),
+        Internships: Number(formData.Internships),
+        Projects: Number(formData.Projects),
+        "Workshops/Certifications": Number(formData["Workshops/Certifications"]),
+        AptitudeTestScore: Number(formData.AptitudeTestScore),
+        SoftSkillsRating: 3.0 + (Number(formData.SoftSkillsRating) / 5) * 1.8,
+        ExtracurricularActivities: Number(formData.ExtracurricularActivities),
+        PlacementTraining: Number(formData.PlacementTraining),
+        SSC_Marks: Number(formData.SSC_Marks),
+        HSC_Marks: Number(formData.HSC_Marks),
       };
 
       const response = await axios.post(
@@ -82,9 +73,25 @@ function Predict() {
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className="text-slate-200 text-sm mb-1 block">CGPA (out of 10)</label>
+              <input
+                type="number" step="0.01" name="CGPA" value={formData.CGPA} onChange={handleChange}
+                required min="0" max="10"
+                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+            <div>
+              <label className="text-slate-200 text-sm mb-1 block">Aptitude Test Score (out of 100)</label>
+              <input
+                type="number" step="0.01" name="AptitudeTestScore" value={formData.AptitudeTestScore} onChange={handleChange}
+                required min="0" max="100"
+                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+            <div>
               <label className="text-slate-200 text-sm mb-1 block">10th Percentage</label>
               <input
-                type="number" name="ssc_p" value={formData.ssc_p} onChange={handleChange}
+                type="number" step="0.01" name="SSC_Marks" value={formData.SSC_Marks} onChange={handleChange}
                 required min="0" max="100"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
@@ -92,105 +99,50 @@ function Predict() {
             <div>
               <label className="text-slate-200 text-sm mb-1 block">12th Percentage</label>
               <input
-                type="number" name="hsc_p" value={formData.hsc_p} onChange={handleChange}
+                type="number" step="0.01" name="HSC_Marks" value={formData.HSC_Marks} onChange={handleChange}
                 required min="0" max="100"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">Degree Percentage</label>
+              <label className="text-slate-200 text-sm mb-1 block">Internships (0-2)</label>
               <input
-                type="number" name="degree_p" value={formData.degree_p} onChange={handleChange}
-                required min="0" max="100"
+                type="number" name="Internships" value={formData.Internships} onChange={handleChange}
+                required min="0" max="2"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">Employability Test %</label>
+              <label className="text-slate-200 text-sm mb-1 block">Projects Completed (0-3)</label>
               <input
-                type="number" name="etest_p" value={formData.etest_p} onChange={handleChange}
-                required min="0" max="100"
+                type="number" name="Projects" value={formData.Projects} onChange={handleChange}
+                required min="0" max="3"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">MBA Percentage</label>
+              <label className="text-slate-200 text-sm mb-1 block">Workshops/Certifications (0-3)</label>
               <input
-                type="number" name="mba_p" value={formData.mba_p} onChange={handleChange}
-                required min="0" max="100"
+                type="number" name="Workshops/Certifications" value={formData["Workshops/Certifications"]} onChange={handleChange}
+                required min="0" max="3"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">Gender</label>
-              <select
-                name="gender_M" value={formData.gender_M} onChange={handleChange}
+              <label className="text-slate-200 text-sm mb-1 block">
+                Soft Skills Rating (out of 5)
+                <span className="text-slate-400 text-xs font-normal ml-1">(communication, leadership, teamwork, etc.)</span>
+              </label>
+              <input
+                type="number" step="0.1" name="SoftSkillsRating" value={formData.SoftSkillsRating} onChange={handleChange}
+                required min="0" max="5"
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              >
-                <option value="0">Female</option>
-                <option value="1">Male</option>
-              </select>
+              />
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">10th Board</label>
+              <label className="text-slate-200 text-sm mb-1 block">Extracurricular Activities</label>
               <select
-                name="ssc_b_Others" value={formData.ssc_b_Others} onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              >
-                <option value="0">Central</option>
-                <option value="1">Others</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-slate-200 text-sm mb-1 block">12th Board</label>
-              <select
-                name="hsc_b_Others" value={formData.hsc_b_Others} onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              >
-                <option value="0">Central</option>
-                <option value="1">Others</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="text-slate-200 text-sm mb-1 block">12th Stream</label>
-              <select
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFormData({
-                    ...formData,
-                    hsc_s_Commerce: val === "Commerce" ? "1" : "0",
-                    hsc_s_Science: val === "Science" ? "1" : "0",
-                  });
-                }}
-                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              >
-                <option value="Arts">Arts</option>
-                <option value="Commerce">Commerce</option>
-                <option value="Science">Science</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="text-slate-200 text-sm mb-1 block">Degree Type</label>
-              <select
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFormData({
-                    ...formData,
-                    degree_t_Others: val === "Others" ? "1" : "0",
-                    "degree_t_Sci&Tech": val === "Sci&Tech" ? "1" : "0",
-                  });
-                }}
-                className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              >
-                <option value="Comm&Mgmt">Commerce & Management</option>
-                <option value="Sci&Tech">Science & Tech</option>
-                <option value="Others">Others</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-slate-200 text-sm mb-1 block">Work Experience</label>
-              <select
-                name="workex_Yes" value={formData.workex_Yes} onChange={handleChange}
+                name="ExtracurricularActivities" value={formData.ExtracurricularActivities} onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               >
                 <option value="0">No</option>
@@ -198,13 +150,13 @@ function Predict() {
               </select>
             </div>
             <div>
-              <label className="text-slate-200 text-sm mb-1 block">MBA Specialisation</label>
+              <label className="text-slate-200 text-sm mb-1 block">Placement Training</label>
               <select
-                name="specialisation_Mkt&HR" value={formData["specialisation_Mkt&HR"]} onChange={handleChange}
+                name="PlacementTraining" value={formData.PlacementTraining} onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-purple-400"
               >
-                <option value="0">Mkt & Finance</option>
-                <option value="1">Mkt & HR</option>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
               </select>
             </div>
           </div>
@@ -226,6 +178,9 @@ function Predict() {
               <p className="text-slate-300 text-sm">Placement Probability</p>
               <p className="text-5xl font-bold text-white">{result.probability}%</p>
               <p className="text-slate-300 mt-2">Readiness Score: {result.readiness_score}/100</p>
+              <p className="text-purple-300 text-sm mt-3 bg-purple-500/10 border border-purple-500/30 rounded-lg py-2 px-3 inline-block">
+                You rank better than {result.percentile}% of students in our evaluation set
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

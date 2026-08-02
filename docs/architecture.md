@@ -9,13 +9,13 @@ in parallel by different team members.
 ## Integration Status
 The Node ↔ Flask integration has been built and tested end-to-end. A POST request 
 to Node's /api/predict correctly forwards to Flask's /predict, returns the full 
-prediction response (probability, readiness score, strengths, weaknesses with labels 
-and suggestions), unmodified through the chain.
+prediction response (probability, readiness score, percentile, strengths, weaknesses 
+with labels and suggestions), unmodified through the chain.
 
-Prediction requests are now protected by JWT authentication (via middleware) and 
-results are persisted to MongoDB in a `predictions` collection, linked to the 
-authenticated user via a MongoDB ObjectId reference. Verified in Atlas that saved 
-predictions correctly reference the user who made them.
+Prediction requests are protected by JWT authentication (via middleware) and results 
+are persisted to MongoDB in a `predictions` collection, linked to the authenticated 
+user via a MongoDB ObjectId reference. Verified in Atlas that saved predictions 
+correctly reference the user who made them.
 
 Authentication (signup/login) is fully implemented and tested: passwords are hashed 
 with bcrypt, sessions use JWT tokens (7-day expiry), and protected routes verify 
@@ -47,8 +47,9 @@ tokens via middleware before processing requests.
 ┌─────────────────────────────┐
 │ Logistic Regression model │
 │ + SHAP Explainer │
-│ (trained on startup, │
-│ held in memory) │
+│ + Percentile Distribution │
+│ (loaded from disk via joblib │
+│ at startup, see save_model.py)│
 └─────────────────────────────┘
 
 ## Data Flow (Prediction Request)
@@ -61,36 +62,45 @@ tokens via middleware before processing requests.
 6. Flask API converts JSON into a DataFrame matching the trained model's feature columns
 7. Logistic Regression model returns a placement probability
 8. SHAP explainer computes per-student feature impact (which factors helped/hurt)
-9. Flask API returns JSON: `probability`, `readiness_score`, `strengths[]`, `weaknesses[]`
-   (exact format documented in `api-contract.md`)
-10. Node/Express receives this response and saves it to MongoDB as a `predictions` 
+9. Percentile is computed by comparing the prediction against the saved training-set 
+   probability distribution
+10. Flask API returns JSON: `probability`, `readiness_score`, `percentile`, 
+    `strengths[]`, `weaknesses[]` (exact format documented in `api-contract.md`)
+11. Node/Express receives this response and saves it to MongoDB as a `predictions` 
     document, linked to the authenticated user's ID
-11. Node/Express sends the result to React frontend
-12. React frontend displays probability, readiness score, and recommendations to the student
+12. Node/Express sends the result to React frontend
+13. React frontend displays probability, readiness score, percentile, and 
+    recommendations to the student
 
 ## ML Pipeline (Offline / Model Preparation)
 Separate from the live prediction flow — this is how the model itself was built:
-Kaggle Dataset (215 records)
+Kaggle Dataset (10,000 records)
 ↓
-clean.py — drop irrelevant/leaking columns, encode categorical features,
-fix boolean dtype for SHAP compatibility
+clean.py — drop identifier column, encode Yes/No fields to 0/1
 ↓
-train.py — train & compare Logistic Regression, Random Forest, XGBoost
+train.py — train & compare Logistic Regression (standard + balanced), Random Forest 
+(standard + balanced), XGBoost (standard + balanced)
 (Accuracy, Precision, Recall, F1, ROC-AUC — see experiments.md)
 ↓
 explain.py — apply SHAP to best model (Logistic Regression), generate
 global feature importance chart
 ↓
-recommend.py — convert SHAP output into readiness score + strengths/weaknesses
-(validated on both high and low scoring students)
+recommend.py — exploratory script validating SHAP-based recommendation logic
 ↓
-app.py — wrap trained model + SHAP explainer in a Flask API for live use
+save_model.py — persist trained model, SHAP explainer, feature columns, and training 
+probability distribution to disk via joblib (avoids retraining on every Flask startup)
+↓
+app.py — load persisted artifacts, wrap in a Flask API for live use
+
+**Dataset history:** this project used three dataset iterations before settling on 
+the current one (MBA-specific → CSE-relevant but imbalanced → CSE-relevant and 
+well-balanced). Full rationale for each switch documented in decisions.md.
 
 ## Tech Stack
 
 | Layer | Technology | Status | Owner |
 |---|---|---|---|
-| Frontend | React, Tailwind CSS | Not started | Team |
+| Frontend | React, Tailwind CSS, Framer Motion, Recharts, Lucide React | In progress (redesign) | Team |
 | Application Backend | Node.js, Express | Complete (auth, predict route) | ML Lead + Backend |
 | Database | MongoDB (Atlas) | Complete (users, predictions) | ML Lead + Backend |
 | ML Model | Python, pandas, scikit-learn | Complete | ML Lead |
@@ -110,11 +120,17 @@ run independently before final integration — Node/React can be developed again
 documented API contract using mock data even before the Flask API is complete.
 
 ## Model Details
-- Algorithm: Logistic Regression (selected after comparison with Random Forest, XGBoost)
-- Training data: 215 records, 172 train / 43 test (80/20 split, random_state=42)
-- Features: 14 (after encoding), covering academic percentages, board, stream, 
-  work experience, specialization, gender
+- Algorithm: Logistic Regression (selected after comparison with Random Forest, XGBoost, 
+  and class-balanced variants of all three — see experiments.md)
+- Dataset: "Placement Prediction Dataset" (ruchikakumbhar, Kaggle), 10,000 records, 
+  8,000 train / 2,000 test (80/20 split, random_state=42)
+- Features (10): CGPA, Internships, Projects, Workshops/Certifications, 
+  AptitudeTestScore, SoftSkillsRating, ExtracurricularActivities, PlacementTraining, 
+  SSC_Marks, HSC_Marks
+- Test accuracy: 79.45%, ROC-AUC: 0.877
 - Explainability: SHAP (Explainer, applied per-prediction at inference time)
+- Percentile: computed against the saved distribution of all training-set prediction 
+  probabilities, giving relative context alongside the raw probability
 
 ## Auth & Data Model
 - **User model**: name, email (unique), hashed password (bcrypt, 10 salt rounds), 
@@ -124,3 +140,56 @@ documented API contract using mock data even before the Flask API is complete.
 - JWT tokens signed with a secret stored in `.env` (excluded from git), 7-day expiry
 - Protected routes verified via `middleware/auth.js`, which checks the 
   `Authorization: Bearer <token>` header
+
+## Frontend Redesign Plan (In Progress)
+Planning a full visual redesign of the React frontend, moving from the current 
+functional-but-plain UI to a premium, dashboard-style interface.
+
+### New folder structure
+src/
+├── assets/
+├── components/
+│ ├── Navbar/
+│ ├── StudentForm/
+│ ├── PredictionCard/
+│ ├── Charts/
+│ │ ├── RadarChart.jsx
+│ │ ├── BarChart.jsx
+│ │ └── PieChart.jsx
+│ ├── RecommendationCard/
+│ ├── Loading/
+│ └── Footer/
+├── pages/
+│ └── Home.jsx
+├── layouts/
+├── services/
+│ └── api.js
+├── hooks/
+├── utils/
+│ ├── constants.js
+│ └── helpers.js
+├── styles/
+├── App.jsx
+└── main.jsx
+
+
+### New dependencies
+Framer Motion (animations), Recharts (radar/bar/pie charts), Lucide React (icons) — 
+in addition to existing React, Tailwind CSS, axios, react-router-dom.
+
+### Design direction
+- Dark theme, background `#0B1020`, accent colors purple (`#8B5CF6`) and cyan (`#06B6D4`)
+- Glassmorphism cards, rounded corners, soft shadows, blur effects
+- Radar chart comparing CGPA/AptitudeTestScore/SoftSkillsRating/SSC_Marks/HSC_Marks/
+  ExtracurricularActivities; bar chart for Internships/Projects/Workshops; pie chart 
+  for Placed/Not Placed probability split
+
+### Important correction from initial design spec
+An earlier AI-generated design spec assumed a different API response shape 
+(`prediction`, `placement_probability`, `confidence`, `areas_to_improve`, 
+`recommendations`) that does not match the actual, tested API contract 
+(`probability`, `readiness_score`, `percentile`, `strengths[]`, `weaknesses[]`). 
+The redesign implementation must use the real field names from api-contract.md. 
+A fabricated "confidence" score was also proposed but rejected — Logistic Regression's 
+predict_proba() produces one probability value, not a separate confidence metric, 
+and inventing one would misrepresent the model's actual output.

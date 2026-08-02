@@ -1,38 +1,48 @@
 # Dataset
 
 ## Source
-Kaggle — "Factors Affecting Campus Placement" (benroshan)
-https://www.kaggle.com/datasets/benroshan/factors-affecting-campus-placement
+Kaggle — "Placement Prediction Dataset" (ruchikakumbhar)
+https://www.kaggle.com/datasets/ruchikakumbhar/placement-prediction-dataset
 
 ## Overview
-- 215 student records
-- Target column: `status` (Placed / Not Placed)
-- Class distribution: 148 Placed, 67 Not Placed (~69% placement rate)
+- 10,000 student records
+- Target column: `PlacementStatus` (Placed / NotPlaced)
+- Class distribution: 5,803 Not Placed, 4,197 Placed (~42% placement rate — well-balanced)
 
 ## Original Columns
-sl_no, gender, ssc_p, ssc_b, hsc_p, hsc_b, hsc_s, degree_p, degree_t, workex, 
-etest_p, specialisation, mba_p, status, salary
+StudentID, CGPA, Internships, Projects, Workshops/Certifications, AptitudeTestScore, 
+SoftSkillsRating, ExtracurricularActivities, PlacementTraining, SSC_Marks, HSC_Marks, 
+PlacementStatus
 
 ## Cleaning Steps Applied (see clean.py)
-1. Dropped `sl_no` — row identifier, not predictive
-2. Dropped `salary` — only populated for placed students; using it as a feature 
-   would leak the answer (data leakage)
-3. Converted `status` to binary: Placed → 1, Not Placed → 0
-4. One-hot encoded categorical columns (`gender`, `ssc_b`, `hsc_b`, `hsc_s`, 
-   `degree_t`, `workex`, `specialisation`) with `drop_first=True` to avoid 
-   redundant columns
-5. Cast resulting boolean (True/False) columns to integers (0/1) — required for 
-   SHAP compatibility (see decisions.md)
+1. Dropped `StudentID` — row identifier, not predictive
+2. Converted `PlacementStatus` to binary: Placed → 1, NotPlaced → 0
+3. Converted `PlacementTraining` to binary: Yes → 1, No → 0
+4. Converted `ExtracurricularActivities` to binary: Yes → 1, No → 0
+5. No further encoding needed — remaining columns (CGPA, Internships, Projects, 
+   Workshops/Certifications, AptitudeTestScore, SoftSkillsRating, SSC_Marks, 
+   HSC_Marks) are already numeric
 
-## Final Feature Set (14 features after cleaning)
-ssc_p, hsc_p, degree_p, etest_p, mba_p, gender_M, ssc_b_Others, hsc_b_Others, 
-hsc_s_Commerce, hsc_s_Science, degree_t_Others, degree_t_Sci&Tech, workex_Yes, 
-specialisation_Mkt&HR
+## Final Feature Set (10 features after cleaning)
+CGPA, Internships, Projects, Workshops/Certifications, AptitudeTestScore, 
+SoftSkillsRating, ExtracurricularActivities, PlacementTraining, SSC_Marks, HSC_Marks
 
 ## Assumptions
-- Baseline categories dropped during one-hot encoding are assumed as the default 
-  when all corresponding dummy columns are 0 (e.g., if hsc_s_Commerce=0 and 
-  hsc_s_Science=0, stream is assumed to be Arts)
-- Dataset reflects historical placement outcomes; no explicit fairness/bias 
-  auditing was performed on protected attributes like gender (noted as a 
-  limitation, potential future work)
+- No fairness/bias auditing was performed on protected attributes (this dataset 
+  does not include gender or other demographic fields, avoiding that concern by design)
+- Dataset is a simulated/synthetic dataset representing plausible student profiles 
+  and outcomes, not verified real-world survey data (see decisions.md for full 
+  dataset selection process and rationale)
+
+## Dataset History
+This project used three different datasets during development before settling on 
+this one:
+1. "Factors Affecting Campus Placement" (benroshan) — MBA-specific, not relevant 
+   to target users (CSE students); also a widely-used tutorial dataset
+2. "College Student Placement Factors Dataset" (sahilislam007) — CSE-relevant but 
+   severely imbalanced (16.6% placement rate), producing unintuitively low scores
+3. "Placement Prediction Dataset" (ruchikakumbhar) — current dataset; CSE-relevant, 
+   well-balanced (42% placement rate), verified realistic model performance (no 
+   suspiciously perfect or uselessly random accuracy)
+
+Full investigation and rationale for each switch documented in decisions.md.

@@ -7,8 +7,8 @@ from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
 
 df = pd.read_csv("placement_data_cleaned.csv")
 
-X = df.drop(columns=["Placement"])   # features (everything except the answer)
-y = df["Placement"]                   # target (what we're predicting)
+X = df.drop(columns=["PlacementStatus"])
+y = df["PlacementStatus"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

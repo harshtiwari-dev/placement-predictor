@@ -2,14 +2,11 @@ import pandas as pd
 
 df = pd.read_csv("placement_data.csv")
 
-df = df.drop(columns=["College_ID"])
+df = df.drop(columns=["StudentID"])
 
-df["Placement"] = df["Placement"].map({"Yes": 1, "No": 0})
-
-df = pd.get_dummies(df, columns=["Internship_Experience"], drop_first=True)
-
-bool_cols = df.select_dtypes(include="bool").columns
-df[bool_cols] = df[bool_cols].astype(int)
+df["PlacementStatus"] = df["PlacementStatus"].map({"Placed": 1, "NotPlaced": 0})
+df["PlacementTraining"] = df["PlacementTraining"].map({"Yes": 1, "No": 0})
+df["ExtracurricularActivities"] = df["ExtracurricularActivities"].map({"Yes": 1, "No": 0})
 
 print(df.shape)
 print(df.columns.tolist())

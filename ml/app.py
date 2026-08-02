@@ -9,28 +9,34 @@ CORS(app)
 model_lr = joblib.load("model.pkl")
 explainer = joblib.load("explainer.pkl")
 feature_columns = joblib.load("feature_columns.pkl")
+probability_distribution = joblib.load("probability_distribution.pkl")  # NEW
 
 FEATURE_LABELS = {
-    "IQ": "IQ Score",
-    "Prev_Sem_Result": "Previous Semester Result",
     "CGPA": "CGPA",
-    "Academic_Performance": "Academic Performance",
-    "Extra_Curricular_Score": "Extra-Curricular Score",
-    "Communication_Skills": "Communication Skills",
-    "Projects_Completed": "Projects Completed",
-    "Internship_Experience_Yes": "Internship Experience"
+    "Internships": "Internships Completed",
+    "Projects": "Projects Completed",
+    "Workshops/Certifications": "Workshops & Certifications",
+    "AptitudeTestScore": "Aptitude Test Score",
+    "SoftSkillsRating": "Soft Skills Rating (Communication, Leadership, Teamwork)",
+    "ExtracurricularActivities": "Extracurricular Activities",
+    "PlacementTraining": "Placement Training",
+    "SSC_Marks": "10th (SSC) Marks",
+    "HSC_Marks": "12th (HSC) Marks"
 }
 
 RECOMMENDATION_TEMPLATES = {
-    "IQ": "Your IQ score is influencing your prediction — this reflects general aptitude, consider practicing logical reasoning and aptitude tests.",
-    "Prev_Sem_Result": "Your previous semester result is a factor — maintaining consistent academic performance each semester helps.",
     "CGPA": "Your CGPA is significantly affecting your prediction — maintaining strong academic performance improves your chances.",
-    "Academic_Performance": "Your overall academic performance is a factor — focus on consistent grades across subjects.",
-    "Extra_Curricular_Score": "Your extra-curricular involvement is a minor factor — participating in more activities could help slightly.",
-    "Communication_Skills": "Your communication skills are a major factor — practicing public speaking, group discussions, and interviews can significantly help.",
-    "Projects_Completed": "The number of projects you've completed is affecting your prediction — building more hands-on projects strengthens your profile.",
-    "Internship_Experience_Yes": "Lack of internship experience is affecting your prediction — consider taking up an internship to strengthen your profile."
+    "Internships": "Completing internships is affecting your prediction — consider taking up an internship to strengthen your profile.",
+    "Projects": "The number of projects you've completed is affecting your prediction — building more hands-on projects strengthens your profile.",
+    "Workshops/Certifications": "Workshops and certifications are a factor — completing relevant certifications can help.",
+    "AptitudeTestScore": "Your aptitude test score is a major factor — practicing aptitude tests and logical reasoning can significantly help.",
+    "SoftSkillsRating": "Your soft skills rating is a major factor — working on communication, teamwork, and interpersonal skills can help.",
+    "ExtracurricularActivities": "Participation in extracurricular activities is affecting your prediction — getting involved in clubs, sports, or events could help.",
+    "PlacementTraining": "Completing placement training is a major factor — enrolling in placement preparation programs can significantly help.",
+    "SSC_Marks": "Your 10th (SSC) marks are a factor — this reflects your foundational academic performance.",
+    "HSC_Marks": "Your 12th (HSC) marks are a factor — this reflects your pre-college academic performance."
 }
+
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
@@ -38,6 +44,7 @@ def predict():
 
     probability = model_lr.predict_proba(input_df)[0][1]
     readiness_score = round(probability * 100)
+    percentile = round((probability_distribution < probability).mean() * 100)  # NEW
 
     shap_values = explainer(input_df)
     shap_row = shap_values[0]
@@ -49,6 +56,7 @@ def predict():
     response = {
         "probability": round(probability * 100, 1),
         "readiness_score": readiness_score,
+        "percentile": percentile,  # NEW
         "strengths": [
             {"feature": f, "label": FEATURE_LABELS.get(f, f), "impact": round(v, 2)}
             for f, v in strengths.items()

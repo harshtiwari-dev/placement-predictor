@@ -66,3 +66,35 @@ to proceed with the current dataset, since its features are appropriate, its
 limitations are well understood and documented, and switching further offered no 
 verified improvement over further investigation time spent.
 
+## Dataset v2 → v3 switch — evaluating multiple candidates
+Dataset v2 (College Student Placement Factors) had a severe class imbalance (16.6% 
+placement rate), causing average/decent student profiles to receive unintuitively 
+low probability scores despite the model behaving correctly (verified via full 
+probability-range testing). This posed a real risk in defending the project to 
+evaluators, who might reasonably ask "couldn't you find a better dataset?"
+
+Evaluated four additional candidate datasets before selecting a replacement:
+1. A 100,000-row dataset (student_placement_prediction_dataset_2026) — well-balanced 
+   (54.5%/45.5%) but models only achieved ~55-57% accuracy, barely above the majority-
+   class baseline, indicating features had almost no real predictive relationship 
+   with the target. Rejected — would produce meaningless SHAP explanations.
+2. "Indian Student Placement Dataset 2025" — CSE-relevant features but exhibited the 
+   same deterministic-formula artifact as v2 (Random Forest/XGBoost hit exactly 100% 
+   accuracy). Rejected.
+3. "Placement Prediction Dataset" (ruchikakumbhar) — 10,000 rows, well-balanced 
+   (58%/42%), realistic model performance across all algorithms (77-79% accuracy, 
+   no suspicious perfect scores, no near-random scores). Selected.
+
+Verification performed on the selected dataset: no duplicate rows, no missing 
+values, per-feature correlations with target ranging 0.26-0.52 (no single dominant 
+feature suggesting leakage), and confirmed no model achieves suspiciously perfect 
+accuracy on any train/test split.
+
+## Percentile ranking feature
+Added a percentile field to the prediction response, computed by comparing a new 
+prediction's probability against the full distribution of training-set probabilities 
+(saved via probability_distribution.pkl). This addresses a UX/communication concern: 
+raw probability alone can feel discouragingly low for a below-51%-threshold profile, 
+even when that profile is actually above-average relative to the training population. 
+Displaying both the raw probability and the relative percentile gives a more complete, 
+honest picture without altering the underlying prediction.
