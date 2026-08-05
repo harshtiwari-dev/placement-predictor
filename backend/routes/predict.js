@@ -27,3 +27,15 @@ router.post("/predict", authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+
+router.get("/predictions/history", authMiddleware, async (req, res) => {
+  try {
+    const predictions = await Prediction.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .select("-inputData -__v");
+
+    res.json(predictions);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch history", error: err.message });
+  }
+});
