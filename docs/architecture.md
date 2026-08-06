@@ -1,76 +1,142 @@
 # System Architecture
 
 ## Overview
+
 Explainable AI-Based Student Placement Prediction and Skill Recommendation System.
-Two-backend architecture: Node.js/Express handles application logic (auth, data storage), 
-Flask handles ML inference. This separation lets ML and full-stack development happen 
-in parallel by different team members.
+
+The project follows a multi-tier architecture consisting of three independent layers:
+
+- **React + Vite Frontend** – User interface for students and administrators.
+- **Node.js + Express Backend** – Handles authentication, authorization, API routing, database operations, and communication with the ML service.
+- **Flask ML Service** – Hosts the trained Logistic Regression model, performs inference, SHAP explainability, and recommendation generation.
+
+MongoDB Atlas serves as the central database for users and prediction history.
+
+This separation allows the frontend, backend, and ML system to evolve independently while communicating through REST APIs.
 
 ## Integration Status
-The Node ↔ Flask integration has been built and tested end-to-end. A POST request 
-to Node's /api/predict correctly forwards to Flask's /predict, returns the full 
-prediction response (probability, readiness score, percentile, strengths, weaknesses 
-with labels and suggestions), unmodified through the chain.
 
-Prediction requests are protected by JWT authentication (via middleware) and results 
-are persisted to MongoDB in a `predictions` collection, linked to the authenticated 
-user via a MongoDB ObjectId reference. Verified in Atlas that saved predictions 
-correctly reference the user who made them.
+The complete system has been integrated and tested end-to-end.
 
-Authentication (signup/login) is fully implemented and tested: passwords are hashed 
-with bcrypt, sessions use JWT tokens (7-day expiry), and protected routes verify 
-tokens via middleware before processing requests.
+Implemented features include:
 
-## Architecture Diagram
-┌─────────────────────────────────────────────────────────┐
-│ FRONTEND (React) │
-│ Student Dashboard │ Login/Signup │ Prediction Result UI │
-└───────────────────────┬───────────────────────────────────┘
-│ REST API calls (axios/fetch)
-▼
-┌─────────────────────────────────────────────────────────┐
-│ NODE.JS + EXPRESS (Main Backend) │
-│ - User auth (student/admin) — JWT + bcrypt, implemented │
-│ - CRUD: profile, resume, skills, internships │
-│ - Stores/fetches data from MongoDB │
-│ - Forwards prediction requests to ML API │
-│ - Saves predictions linked to authenticated user │
-└──────────┬──────────────────────────────┬─────────────────┘
-│ │
-▼ ▼
-┌─────────────────────┐ ┌─────────────────────────────┐
-│ MongoDB │ │ FLASK API (Python, ML) │
-│ users, │ │ Endpoint: POST /predict │
-│ predictions │ │ Port: 5000 (local dev) │
-└─────────────────────┘ └───────────┬───────────────────┘
-▼
-┌─────────────────────────────┐
-│ Logistic Regression model │
-│ + SHAP Explainer │
-│ + Percentile Distribution │
-│ (loaded from disk via joblib │
-│ at startup, see save_model.py)│
-└─────────────────────────────┘
+- User authentication (Signup/Login)
+- JWT-based authorization
+- Student & Admin roles
+- Prediction History
+- Admin Dashboard
+- Prediction storage in MongoDB
+- React ↔ Node ↔ Flask communication
+- SHAP explainability
+- Protected API routes
+
+Prediction flow:
+
+React
+→ Express Backend
+→ Flask ML API
+→ MongoDB
+→ React
+
+Every authenticated prediction request is saved to MongoDB and linked to the currently logged-in user through an ObjectId reference.
+
+Admin users have access to platform analytics including:
+
+- Registered users
+- Prediction history
+- User roles
+- Platform statistics
+
+                    +-----------------------------+
+                    |      React Frontend         |
+                    |-----------------------------|
+                    | Landing Page               |
+                    | Login / Signup             |
+                    | Student Dashboard          |
+                    | Prediction History         |
+                    | Admin Dashboard            |
+                    +-------------+--------------+
+                                  |
+                           REST API (Axios)
+                                  |
+                                  ▼
+                +-----------------------------------+
+                |      Node.js + Express Backend    |
+                |-----------------------------------|
+                | JWT Authentication                |
+                | Role-based Authorization          |
+                | Prediction API                    |
+                | Admin APIs                        |
+                | History API                       |
+                | MongoDB Operations                |
+                +-------------+---------------------+
+                              |
+             +----------------+----------------+
+             |                                 |
+             ▼                                 ▼
++---------------------------+      +----------------------------+
+|      MongoDB Atlas        |      |     Flask ML Service       |
+|---------------------------|      |----------------------------|
+| Users Collection          |      | Logistic Regression        |
+| Predictions Collection    |      | SHAP Explainer            |
+|                           |      | Recommendation Engine     |
++---------------------------+      | Percentile Calculator     |
+                                   +-------------+-------------+
+                                                 |
+                                                 ▼
+                                      Trained ML Artifacts
+                                      (joblib)
 
 ## Data Flow (Prediction Request)
-1. Student logs in via React frontend, receives a JWT token
-2. Student fills placement details form in React frontend
-3. Frontend sends form data to Node/Express backend's `/api/predict`, with the JWT 
-   token in the Authorization header
-4. Node's auth middleware verifies the token before proceeding
-5. Node/Express forwards the form data as JSON to Flask API (`POST /predict`)
-6. Flask API converts JSON into a DataFrame matching the trained model's feature columns
-7. Logistic Regression model returns a placement probability
-8. SHAP explainer computes per-student feature impact (which factors helped/hurt)
-9. Percentile is computed by comparing the prediction against the saved training-set 
-   probability distribution
-10. Flask API returns JSON: `probability`, `readiness_score`, `percentile`, 
-    `strengths[]`, `weaknesses[]` (exact format documented in `api-contract.md`)
-11. Node/Express receives this response and saves it to MongoDB as a `predictions` 
-    document, linked to the authenticated user's ID
-12. Node/Express sends the result to React frontend
-13. React frontend displays probability, readiness score, percentile, and 
-    recommendations to the student
+
+1. Student logs into the application.
+2. Express verifies credentials using bcrypt.
+3. JWT token is generated and returned.
+4. Student submits placement information.
+5. React sends a POST request to `/api/predict` with the JWT token.
+6. Express verifies the token using authentication middleware.
+7. Express forwards the request to the Flask ML API.
+8. Flask preprocesses the data into model-ready format.
+9. Logistic Regression predicts placement probability.
+10. SHAP identifies positive and negative feature contributions.
+11. Readiness score and percentile are calculated.
+12. Flask returns the prediction result.
+13. Express stores the prediction in MongoDB.
+14. React displays:
+    - Probability
+    - Readiness Score
+    - Percentile
+    - Strengths
+    - Weaknesses
+    - Recommendations
+15. The prediction is automatically available inside Prediction History.
+
+
+## Data Flow (Prediction History)
+1. Authenticated user navigates to `/history`
+2. Frontend calls `GET /api/predictions/history` with JWT token
+3. Node's auth middleware verifies the token
+4. Node queries MongoDB for all `predictions` documents matching `user: req.user.id`, 
+   sorted newest-first, excluding raw input data
+5. Frontend renders results as a timeline list with probability, readiness score, 
+   and timestamp per entry
+
+## Data Flow (Admin Dashboard)
+
+1. Admin logs into the system.
+2. JWT token is verified.
+3. Admin Dashboard requests:
+   - Registered users
+   - Prediction history
+4. Express verifies that the authenticated user has the `admin` role.
+5. MongoDB returns users and predictions.
+6. Dashboard displays:
+   - Total Users
+   - Total Predictions
+   - Admin Count
+   - Student Count
+   - Registered Users Table
+   - Recent Predictions Table
 
 ## ML Pipeline (Offline / Model Preparation)
 Separate from the live prediction flow — this is how the model itself was built:
@@ -98,14 +164,16 @@ well-balanced). Full rationale for each switch documented in decisions.md.
 
 ## Tech Stack
 
-| Layer | Technology | Status | Owner |
-|---|---|---|---|
-| Frontend | React, Tailwind CSS, Framer Motion, Recharts, Lucide React | In progress (redesign) | Team |
-| Application Backend | Node.js, Express | Complete (auth, predict route) | ML Lead + Backend |
-| Database | MongoDB (Atlas) | Complete (users, predictions) | ML Lead + Backend |
-| ML Model | Python, pandas, scikit-learn | Complete | ML Lead |
-| Explainability | SHAP | Complete | ML Lead |
-| ML API | Flask | Complete | ML Lead |
+| Layer            | Technology                                                       | Status     |
+| ---------------- | ---------------------------------------------------------------- | ---------- |
+| Frontend         | React, Vite, Tailwind CSS, Framer Motion, Recharts, Lucide React | ✅ Complete |
+| Backend          | Node.js, Express.js                                              | ✅ Complete |
+| Authentication   | JWT, bcrypt                                                      | ✅ Complete |
+| Database         | MongoDB Atlas, Mongoose                                          | ✅ Complete |
+| Machine Learning | Python, Flask, scikit-learn                                      | ✅ Complete |
+| Explainability   | SHAP                                                             | ✅ Complete |
+| Visualization    | Recharts                                                         | ✅ Complete |
+
 
 ## Why Two Backends
 Node/Express and Flask serve different purposes and are not redundant:
@@ -141,34 +209,43 @@ documented API contract using mock data even before the Flask API is complete.
 - Protected routes verified via `middleware/auth.js`, which checks the 
   `Authorization: Bearer <token>` header
 
-## Frontend Redesign Plan (In Progress)
-Planning a full visual redesign of the React frontend, moving from the current 
-functional-but-plain UI to a premium, dashboard-style interface.
+## Frontend Structure (Implemented)
+The frontend was rebuilt from a single-file structure into reusable components.
+
+
 
 ### New folder structure
 src/
-├── assets/
 ├── components/
-│ ├── Navbar/
-│ ├── StudentForm/
-│ ├── PredictionCard/
-│ ├── Charts/
-│ │ ├── RadarChart.jsx
-│ │ ├── BarChart.jsx
-│ │ └── PieChart.jsx
-│ ├── RecommendationCard/
-│ ├── Loading/
-│ └── Footer/
+│   ├── Admin/
+│   ├── Charts/
+│   ├── Hero/
+│   ├── Features/
+│   ├── Stats/
+│   ├── Workflow/
+│   ├── Technology/
+│   ├── About/
+│   ├── CTA/
+│   ├── Navbar/
+│   ├── StudentForm/
+│   ├── PredictionCard/
+│   ├── RecommendationCard/
+│   └── LoadingCard/
+│
 ├── pages/
-│ └── Home.jsx
-├── layouts/
+│   ├── LandingPage.jsx
+│   ├── Login.jsx
+│   ├── Signup.jsx
+│   ├── Dashboard.jsx
+│   ├── History.jsx
+│   └── AdminDashboard.jsx
+│
 ├── services/
-│ └── api.js
-├── hooks/
+│   └── api.js
+│
 ├── utils/
-│ ├── constants.js
-│ └── helpers.js
-├── styles/
+│   └── constants.js
+│
 ├── App.jsx
 └── main.jsx
 
@@ -183,6 +260,28 @@ in addition to existing React, Tailwind CSS, axios, react-router-dom.
 - Radar chart comparing CGPA/AptitudeTestScore/SoftSkillsRating/SSC_Marks/HSC_Marks/
   ExtracurricularActivities; bar chart for Internships/Projects/Workshops; pie chart 
   for Placed/Not Placed probability split
+
+### Design system (implemented)
+- Dark theme, background `#0B1020`, accent colors purple (`#8B5CF6`) and cyan (`#06B6D4`)
+- Glassmorphism cards (`bg-white/[0.03]`, `backdrop-blur-xl`, `border-white/10`)
+- Framer Motion for fade-ins, staggered animations, hover states
+- Recharts for radar/bar/pie charts; custom SVG for the circular probability gauge
+- Smooth scroll + themed scrollbar (purple-to-cyan gradient) via global CSS
+- Public landing page (Hero, Stats, Features, Workflow, About, CTA) separate from 
+  authenticated Dashboard experience
+
+### Routes
+| Path         | Page               | Access             |
+| ------------ | ------------------ | ------------------ |
+| `/`          | Landing Page       | Public             |
+| `/login`     | Login              | Public             |
+| `/signup`    | Signup             | Public             |
+| `/dashboard` | Student Dashboard  | Authenticated User |
+| `/history`   | Prediction History | Authenticated User |
+| `/admin`     | Admin Dashboard    | Admin Only         |
+
+
+
 
 ### Important correction from initial design spec
 An earlier AI-generated design spec assumed a different API response shape 

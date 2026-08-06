@@ -1,100 +1,350 @@
-## SHAP + numpy compatibility issue
-Encountered a TypeError when running shap.plots.beeswarm() due to boolean (True/False) 
-columns from one-hot encoding being incompatible with numpy's rounding function in 
-this SHAP version. Fixed by explicitly casting all boolean columns to integers (0/1) 
-in clean.py after encoding.
-## Two-backend architecture (Node + Flask)
-Chose to keep ML inference in a separate Flask service rather than reimplementing 
-the model in Node.js, since Python's ML ecosystem (scikit-learn, SHAP) has no 
-mature equivalent in JavaScript. Node/Express handles auth, MongoDB, and app logic; 
-Flask handles only prediction. Node forwards prediction requests to Flask via axios 
-and returns the response unmodified. This also let ML and backend development 
-proceed independently before integration.
+# Project Decisions
 
-## Authentication approach
-Implemented signup/login using bcrypt for password hashing (10 salt rounds) and 
-JWT for session tokens (7-day expiry). Passwords are never stored in plain text — 
-verified directly in MongoDB Atlas that stored passwords appear as bcrypt hashes.
+## SHAP + NumPy Compatibility Issue
 
-## Database naming
-Initial MongoDB connection used the default 'test' database since no database name 
-was specified in the connection string. Fixed by adding an explicit database name 
-('placement-predictor') to the URI for clarity — MongoDB auto-creates a database 
-the first time data is written to it, so no manual creation was needed.
+Encountered a `TypeError` when running `shap.plots.beeswarm()` due to boolean (`True/False`) columns created during one-hot encoding being incompatible with NumPy's rounding functions in the installed SHAP version.
 
-## Secrets management
-Database connection string and JWT signing secret are stored in a .env file, 
-excluded from git via .gitignore. Rotated the database password after it was 
-briefly exposed in plaintext during debugging, as a precaution.
+Resolved by explicitly converting all boolean columns to integer (`0/1`) values inside `clean.py` after encoding.
 
-## Node/Flask integration — verified working
-Built a POST /api/predict route in Node that forwards incoming requests to the 
-Flask API (POST /predict) using axios, and returns the response unchanged. Tested 
-end-to-end: request sent to Node correctly reaches Flask, runs through the trained 
-model and SHAP explainer, and returns the full response (probability, readiness 
-score, strengths, weaknesses) back through Node with no data loss or transformation.
+---
 
-## Dataset switch — MBA to CSE-relevant placement data
-The original dataset ("Factors Affecting Campus Placement," benroshan, 215 rows) was 
-MBA-specific (fields like mba_p, specialisation_Mkt&HR), which didn't reflect the 
-target users of this project (CSE/engineering students) and is a widely-used 
-tutorial dataset, weakening claims of an original contribution. Switched to the 
-"College Student Placement Factors Dataset" (sahilislam007, Kaggle) — 10,000 rows 
-with CSE-relevant features: IQ, Prev_Sem_Result, CGPA, Academic_Performance, 
-Internship_Experience, Extra_Curricular_Score, Communication_Skills, 
-Projects_Completed.
+## Two-Backend Architecture (Node.js + Flask)
 
-## Model comparison — synthetic dataset artifact
-Random Forest and XGBoost both achieved exactly 100% accuracy and 1.0 ROC-AUC on 
-the new dataset, while Logistic Regression achieved 90.4%. Investigation ruled out 
-data leakage (no duplicate rows between train/test, no single feature with 
-correlation above 0.33 to the target). This pattern strongly suggests the dataset's 
-placement labels were generated via a deterministic rule/formula (consistent with 
-it being labeled a "Realistic Simulation" dataset by its source), which tree-based 
-models can learn exactly, while Logistic Regression's linear decision boundary 
-cannot fully capture. Given this, Logistic Regression was retained as the deployed 
-model — its more realistic, non-perfect performance is more representative of 
-real-world placement prediction, and perfect classifier performance would be 
-scientifically indefensible in a viva or research setting.
+The application uses two independent backend services.
 
-## Dataset provenance — search for a "real" (non-synthetic) alternative
-Investigated whether a genuinely real-world (non-synthetic) placement dataset with 
-CSE-relevant features exists publicly. Found that real student outcome data is 
-rarely released publicly due to sensitivity, and even well-known datasets in this 
-space (e.g., the original benroshan MBA dataset) have unclear provenance. Decided 
-to proceed with the current dataset, since its features are appropriate, its 
-limitations are well understood and documented, and switching further offered no 
-verified improvement over further investigation time spent.
+- **Node.js + Express**
+  - Authentication
+  - Authorization
+  - MongoDB operations
+  - API routing
+  - Prediction history
+  - Admin APIs
+  - Communication with Flask
 
-## Dataset v2 → v3 switch — evaluating multiple candidates
-Dataset v2 (College Student Placement Factors) had a severe class imbalance (16.6% 
-placement rate), causing average/decent student profiles to receive unintuitively 
-low probability scores despite the model behaving correctly (verified via full 
-probability-range testing). This posed a real risk in defending the project to 
-evaluators, who might reasonably ask "couldn't you find a better dataset?"
+- **Flask**
+  - Loads trained ML model
+  - Generates predictions
+  - Computes SHAP explanations
+  - Returns recommendation data
 
-Evaluated four additional candidate datasets before selecting a replacement:
-1. A 100,000-row dataset (student_placement_prediction_dataset_2026) — well-balanced 
-   (54.5%/45.5%) but models only achieved ~55-57% accuracy, barely above the majority-
-   class baseline, indicating features had almost no real predictive relationship 
-   with the target. Rejected — would produce meaningless SHAP explanations.
-2. "Indian Student Placement Dataset 2025" — CSE-relevant features but exhibited the 
-   same deterministic-formula artifact as v2 (Random Forest/XGBoost hit exactly 100% 
-   accuracy). Rejected.
-3. "Placement Prediction Dataset" (ruchikakumbhar) — 10,000 rows, well-balanced 
-   (58%/42%), realistic model performance across all algorithms (77-79% accuracy, 
-   no suspicious perfect scores, no near-random scores). Selected.
+Python's machine learning ecosystem (scikit-learn, SHAP) is significantly more mature than JavaScript's, making Flask the appropriate choice for serving the ML model instead of attempting to port it into Node.js.
 
-Verification performed on the selected dataset: no duplicate rows, no missing 
-values, per-feature correlations with target ranging 0.26-0.52 (no single dominant 
-feature suggesting leakage), and confirmed no model achieves suspiciously perfect 
-accuracy on any train/test split.
+This separation also allowed ML development and backend development to proceed independently before final integration.
 
-## Percentile ranking feature
-Added a percentile field to the prediction response, computed by comparing a new 
-prediction's probability against the full distribution of training-set probabilities 
-(saved via probability_distribution.pkl). This addresses a UX/communication concern: 
-raw probability alone can feel discouragingly low for a below-51%-threshold profile, 
-even when that profile is actually above-average relative to the training population. 
-Displaying both the raw probability and the relative percentile gives a more complete, 
-honest picture without altering the underlying prediction.
+---
+
+## Authentication Strategy
+
+Implemented authentication using:
+
+- bcrypt for password hashing (12 salt rounds)
+- JWT tokens with 7-day expiry
+- Express authentication middleware protecting all private routes
+
+Passwords are never stored in plaintext.
+
+JWT contains:
+
+- user id
+- user role
+
+which are used for authentication and authorization throughout the application.
+
+---
+
+## Role-Based Authorization
+
+Instead of maintaining separate applications for administrators and students, the project uses role-based authorization.
+
+Two roles exist:
+
+- student
+- admin
+
+A dedicated `adminMiddleware` checks the decoded JWT and restricts admin-only endpoints.
+
+Admin-only features include:
+
+- View all registered users
+- View all prediction history
+- Dashboard statistics
+
+This approach keeps one authentication system while providing different permissions.
+
+---
+
+## Database Naming
+
+Initially MongoDB connected to the default `test` database because no database name existed inside the connection string.
+
+The URI was updated to explicitly use:
+
+`placement-predictor`
+
+This keeps the database structure cleaner and avoids accidental collections inside the default database.
+
+---
+
+## Secrets Management
+
+Sensitive configuration is stored inside `.env`.
+
+Examples:
+
+- MongoDB URI
+- JWT Secret
+
+The `.env` file is excluded from Git using `.gitignore`.
+
+Database credentials were rotated after being exposed once during debugging.
+
+---
+
+## Node ↔ Flask Integration
+
+Implemented the following prediction pipeline:
+
+React
+
+↓
+
+Express `/api/predict`
+
+↓
+
+JWT verification
+
+↓
+
+Axios request
+
+↓
+
+Flask `/predict`
+
+↓
+
+Machine Learning model
+
+↓
+
+Express stores prediction
+
+↓
+
+MongoDB
+
+↓
+
+Frontend response
+
+The integration was tested end-to-end and verified successfully.
+
+---
+
+## Prediction Persistence
+
+Every prediction is automatically stored inside MongoDB.
+
+Each prediction document contains:
+
+- authenticated user id
+- input values
+- probability
+- readiness score
+- strengths
+- weaknesses
+- timestamp
+
+Predictions are linked to users through a MongoDB ObjectId reference.
+
+This design enabled prediction history without changing the schema later.
+
+---
+
+## Prediction History Feature
+
+Added a dedicated history page allowing every authenticated student to review previous predictions.
+
+Backend endpoint:
+
+GET `/api/predictions/history`
+
+Features:
+
+- JWT protected
+- returns only current user's predictions
+- sorted newest first
+- excludes raw input data
+
+No schema changes were required because predictions were already linked to users.
+
+---
+
+## Admin Dashboard
+
+Implemented a dedicated administrator dashboard.
+
+The dashboard displays:
+
+- Total Users
+- Total Predictions
+- Total Students
+- Total Admins
+
+It also provides:
+
+- complete users table
+- complete prediction table
+
+Only users with the `admin` role can access these endpoints.
+
+The frontend additionally hides the Admin Dashboard navigation link for non-admin users.
+
+---
+
+## Dataset Switch — MBA Dataset to Engineering Dataset
+
+The original dataset ("Factors Affecting Campus Placement") focused primarily on MBA admissions and placements.
+
+Since the target audience of this project is engineering students, the dataset was replaced with engineering-relevant placement datasets.
+
+This also improves the originality and research value of the project.
+
+---
+
+## Dataset Evaluation
+
+Several candidate datasets were evaluated.
+
+Rejected datasets included:
+
+- deterministic datasets where Random Forest achieved 100% accuracy
+- highly imbalanced datasets producing unrealistic probabilities
+- datasets with weak predictive relationships
+
+The selected dataset:
+
+**Placement Prediction Dataset (Kaggle — ruchikakumbhar)**
+
+Reasons:
+
+- 10,000 records
+- balanced classes
+- realistic feature relationships
+- realistic model accuracy
+- suitable for explainability
+
+---
+
+## Model Selection
+
+Multiple algorithms were compared.
+
+Models evaluated:
+
+- Logistic Regression
+- Random Forest
+- XGBoost
+
+Selection metrics:
+
+- Accuracy
+- Precision
+- Recall
+- F1 Score
+- ROC-AUC
+
+Although some tree-based models achieved higher scores on earlier datasets, Logistic Regression was selected because it generalized realistically on the final dataset and produces interpretable probabilities suitable for SHAP explanations.
+
+---
+
+## Percentile Ranking
+
+Added a percentile metric alongside prediction probability.
+
+Instead of showing only:
+
+> 58% placement chance
+
+the system also reports how the student compares with the training population.
+
+Percentile is computed using the saved training prediction probability distribution.
+
+This provides additional context without altering the actual model prediction.
+
+---
+
+## Frontend Redesign
+
+The frontend was completely redesigned into reusable React components.
+
+Major improvements include:
+
+- Landing Page
+- Dashboard
+- Login
+- Signup
+- History
+- Admin Dashboard
+
+Reusable UI components include:
+
+- Navbar
+- Student Form
+- Prediction Card
+- Recommendation Card
+- Charts
+- Admin Tables
+- Statistic Cards
+
+The redesign improves maintainability and makes future feature additions easier.
+
+---
+
+## Dashboard Loading Experience
+
+Instead of displaying a blank prediction card while waiting for the ML model, the dashboard now shows a staged loading animation representing the AI pipeline.
+
+Stages include:
+
+- Collecting student profile
+- Validating academic records
+- Running ML prediction
+- Applying SHAP explainability
+- Generating recommendations
+- Finalizing results
+
+This improves perceived responsiveness while accurately representing the prediction workflow.
+
+---
+
+## UI Design System
+
+Adopted a consistent dark theme throughout the application.
+
+Design choices:
+
+- Background: `#0B1020`
+- Purple/Cyan gradient accents
+- Glassmorphism cards
+- Framer Motion animations
+- Recharts visualizations
+- Lucide React icons
+
+The goal was to create a modern AI dashboard rather than a traditional academic web application.
+
+---
+
+## Future Deployment Strategy
+
+The project is designed for independent deployment of each service.
+
+Planned deployment:
+
+- React → Vercel
+- Express Backend → Render
+- Flask ML API → Render
+- MongoDB Atlas → Cloud Database
+
+This architecture allows each service to scale independently and mirrors production deployment practices used in modern full-stack applications.
