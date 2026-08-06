@@ -39,15 +39,39 @@ function Navbar() {
 
         {user && (
           <div className="flex items-center gap-4">
-            <span className="text-slate-300 text-sm hidden sm:block">Hi, {user.name}</span>
-            <Link to="/history" className="text-slate-400 hover:text-white text-sm transition">
+            <span className="text-slate-300 text-sm hidden sm:block">
+              Hi, {user.name}
+            </span>
+            
+            <Link
+              to="/dashboard"
+              className="text-slate-400 hover:text-white text-sm transition"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              to="/history"
+              className="text-slate-400 hover:text-white text-sm transition"
+            >
               History
             </Link>
+
+            {user.role === "admin" && (
+              <Link
+                to="/admin"
+                className="text-slate-400 hover:text-white text-sm transition"
+              >
+                Admin
+              </Link>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition"
             >
-              <LogOut size={16} /> Logout
+              <LogOut size={16} />
+              Logout
             </button>
           </div>
         )}

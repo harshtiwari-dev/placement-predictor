@@ -25,3 +25,23 @@ export const getHistory = () => {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
+
+export const getAllUsers = () => {
+  const token = localStorage.getItem("token");
+
+  return api.get("/admin/users", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const getAllPredictions = () => {
+  const token = localStorage.getItem("token");
+
+  return api.get("/admin/predictions", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};

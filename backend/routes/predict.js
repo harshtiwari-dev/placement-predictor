@@ -22,8 +22,13 @@ router.post("/predict", authMiddleware, async (req, res) => {
 
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ message: "Prediction service error", error: err.message });
-  }
+  console.error("Prediction Error:", err);
+
+  res.status(500).json({
+    message: "Prediction service error",
+    error: err.message
+  });
+}
 });
 
 module.exports = router;
