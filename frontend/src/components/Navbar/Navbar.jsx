@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
-import { Brain, LogOut } from "lucide-react";
+import { BrainCircuit, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-
 
 function Navbar() {
   const navigate = useNavigate();
@@ -20,12 +19,12 @@ function Navbar() {
       className="sticky top-0 z-50 backdrop-blur-xl bg-[#0B1020]/80 border-b border-white/10"
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-            <Brain size={18} className="text-white" />
+        <Link to="/" className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <BrainCircuit size={18} className="text-white" strokeWidth={2.2} />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm leading-tight">Placement Prediction Portal</p>
+            <p className="text-white font-semibold text-sm leading-tight">CareerLens AI</p>
             <div className="flex items-center gap-1.5">
               <motion.span
                 animate={{ opacity: [1, 0.4, 1] }}
@@ -35,33 +34,24 @@ function Navbar() {
               <span className="text-green-400 text-xs">ML Model Online</span>
             </div>
           </div>
-        </div>
+        </Link>
 
         {user && (
           <div className="flex items-center gap-4">
             <span className="text-slate-300 text-sm hidden sm:block">
               Hi, {user.name}
             </span>
-            
-            <Link
-              to="/dashboard"
-              className="text-slate-400 hover:text-white text-sm transition"
-            >
+
+            <Link to="/dashboard" className="text-slate-400 hover:text-white text-sm transition">
               Dashboard
             </Link>
 
-            <Link
-              to="/history"
-              className="text-slate-400 hover:text-white text-sm transition"
-            >
+            <Link to="/history" className="text-slate-400 hover:text-white text-sm transition">
               History
             </Link>
 
             {user.role === "admin" && (
-              <Link
-                to="/admin"
-                className="text-slate-400 hover:text-white text-sm transition"
-              >
+              <Link to="/admin" className="text-slate-400 hover:text-white text-sm transition">
                 Admin
               </Link>
             )}
