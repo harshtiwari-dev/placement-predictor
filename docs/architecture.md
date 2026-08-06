@@ -1,61 +1,87 @@
-# System Architecture
+# System Architecture — CareerLens AI
 
 ## Overview
 
-Explainable AI-Based Student Placement Prediction and Skill Recommendation System.
+**CareerLens AI — Explainable Career Intelligence**
+
+CareerLens AI is an Explainable AI-based student placement prediction and skill recommendation system designed to help students understand their placement readiness and identify improvement areas.
 
 The project follows a multi-tier architecture consisting of three independent layers:
 
-- **React + Vite Frontend** – User interface for students and administrators.
-- **Node.js + Express Backend** – Handles authentication, authorization, API routing, database operations, and communication with the ML service.
-- **Flask ML Service** – Hosts the trained Logistic Regression model, performs inference, SHAP explainability, and recommendation generation.
+* **React + Vite Frontend** – Provides the user interface for students and administrators.
+* **Node.js + Express Backend** – Handles authentication, authorization, API routing, database operations, and communication with ML services.
+* **Flask ML Service** – Hosts the trained machine learning model, performs inference, SHAP explainability, and recommendation generation.
 
-MongoDB Atlas serves as the central database for users and prediction history.
+MongoDB Atlas acts as the central database for storing:
 
-This separation allows the frontend, backend, and ML system to evolve independently while communicating through REST APIs.
+* User accounts
+* Roles
+* Prediction history
+* Student placement insights
 
-## Integration Status
+This separation allows frontend, backend, and machine learning components to evolve independently while communicating through REST APIs.
 
-The complete system has been integrated and tested end-to-end.
+---
+
+# System Integration Status
+
+The complete CareerLens AI system has been integrated and tested end-to-end.
 
 Implemented features include:
 
-- User authentication (Signup/Login)
-- JWT-based authorization
-- Student & Admin roles
-- Prediction History
-- Admin Dashboard
-- Prediction storage in MongoDB
-- React ↔ Node ↔ Flask communication
-- SHAP explainability
-- Protected API routes
+* User authentication (Signup/Login)
+* JWT-based authorization
+* Student and Admin roles
+* Placement prediction
+* Prediction history
+* Admin dashboard
+* MongoDB prediction storage
+* React ↔ Express ↔ Flask communication
+* SHAP-based Explainable AI insights
+* Skill improvement recommendations
+* Protected API routes
 
-Prediction flow:
+---
 
-React
-→ Express Backend
-→ Flask ML API
-→ MongoDB
-→ React
+# Overall System Flow
 
-Every authenticated prediction request is saved to MongoDB and linked to the currently logged-in user through an ObjectId reference.
+```
+React Frontend
+        |
+        | REST API (Axios)
+        |
+        ▼
+Express Backend
+        |
+        | ML Request
+        |
+        ▼
+Flask ML Service
+        |
+        ▼
+MongoDB Atlas
+        |
+        ▼
+React Dashboard
+```
 
-Admin users have access to platform analytics including:
+Every authenticated prediction request is stored in MongoDB and linked to the currently logged-in user through an ObjectId reference.
 
-- Registered users
-- Prediction history
-- User roles
-- Platform statistics
+---
 
+# High-Level Architecture Diagram
+
+```
                     +-----------------------------+
                     |      React Frontend         |
                     |-----------------------------|
-                    | Landing Page               |
-                    | Login / Signup             |
-                    | Student Dashboard          |
-                    | Prediction History         |
-                    | Admin Dashboard            |
-                    +-------------+--------------+
+                    | CareerLens AI Landing Page  |
+                    | Login / Signup              |
+                    | Student Dashboard           |
+                    | Prediction History          |
+                    | Admin Dashboard             |
+                    | Navbar + Branding           |
+                    +-------------+---------------+
                                   |
                            REST API (Axios)
                                   |
@@ -74,95 +100,177 @@ Admin users have access to platform analytics including:
              +----------------+----------------+
              |                                 |
              ▼                                 ▼
+
 +---------------------------+      +----------------------------+
 |      MongoDB Atlas        |      |     Flask ML Service       |
 |---------------------------|      |----------------------------|
 | Users Collection          |      | Logistic Regression        |
-| Predictions Collection    |      | SHAP Explainer            |
-|                           |      | Recommendation Engine     |
-+---------------------------+      | Percentile Calculator     |
-                                   +-------------+-------------+
+| Predictions Collection   |      | SHAP Explainer             |
+| User Roles               |      | Recommendation Engine      |
++---------------------------+      | Percentile Calculator      |
+                                   +-------------+--------------+
                                                  |
                                                  ▼
                                       Trained ML Artifacts
-                                      (joblib)
+                                      (joblib files)
+```
 
-## Data Flow (Prediction Request)
+---
 
-1. Student logs into the application.
+# Data Flow — Prediction Request
+
+1. Student logs into CareerLens AI.
+
 2. Express verifies credentials using bcrypt.
+
 3. JWT token is generated and returned.
-4. Student submits placement information.
-5. React sends a POST request to `/api/predict` with the JWT token.
-6. Express verifies the token using authentication middleware.
-7. Express forwards the request to the Flask ML API.
-8. Flask preprocesses the data into model-ready format.
-9. Logistic Regression predicts placement probability.
-10. SHAP identifies positive and negative feature contributions.
+
+4. Student submits placement-related information.
+
+5. React sends a POST request to `/api/predict`.
+
+6. Express validates JWT authentication.
+
+7. Express forwards the request to Flask ML Service.
+
+8. Flask preprocesses input data.
+
+9. Machine learning model predicts placement probability.
+
+10. SHAP analyzes positive and negative feature contributions.
+
 11. Readiness score and percentile are calculated.
-12. Flask returns the prediction result.
-13. Express stores the prediction in MongoDB.
+
+12. Flask returns prediction results.
+
+13. Express stores prediction data in MongoDB.
+
 14. React displays:
-    - Probability
-    - Readiness Score
-    - Percentile
-    - Strengths
-    - Weaknesses
-    - Recommendations
-15. The prediction is automatically available inside Prediction History.
 
+    * Placement Probability
+    * Career Readiness Score
+    * Percentile Ranking
+    * Strengths
+    * Weaknesses
+    * Recommendations
 
-## Data Flow (Prediction History)
-1. Authenticated user navigates to `/history`
-2. Frontend calls `GET /api/predictions/history` with JWT token
-3. Node's auth middleware verifies the token
-4. Node queries MongoDB for all `predictions` documents matching `user: req.user.id`, 
-   sorted newest-first, excluding raw input data
-5. Frontend renders results as a timeline list with probability, readiness score, 
-   and timestamp per entry
+15. The prediction becomes available in Prediction History.
 
-## Data Flow (Admin Dashboard)
+---
 
-1. Admin logs into the system.
-2. JWT token is verified.
-3. Admin Dashboard requests:
-   - Registered users
-   - Prediction history
-4. Express verifies that the authenticated user has the `admin` role.
-5. MongoDB returns users and predictions.
+# Data Flow — Prediction History
+
+1. Authenticated user opens Prediction History.
+2. Frontend sends:
+
+```
+GET /api/predictions/history
+```
+
+with JWT token.
+
+3. Express authentication middleware validates the token.
+4. Backend queries MongoDB predictions collection.
+5. Predictions are filtered using:
+
+```
+user: req.user.id
+```
+
+6. Results are sorted newest-first.
+7. Frontend displays prediction timeline with:
+
+* Probability
+* Readiness Score
+* Timestamp
+
+---
+
+# Data Flow — Admin Dashboard
+
+1. Admin logs into CareerLens AI.
+2. JWT token authentication is verified.
+3. Admin dashboard requests:
+
+* Registered users
+* Prediction records
+* Platform statistics
+
+4. Express verifies admin role.
+5. MongoDB returns required information.
 6. Dashboard displays:
-   - Total Users
-   - Total Predictions
-   - Admin Count
-   - Student Count
-   - Registered Users Table
-   - Recent Predictions Table
 
-## ML Pipeline (Offline / Model Preparation)
-Separate from the live prediction flow — this is how the model itself was built:
-Kaggle Dataset (10,000 records)
-↓
-clean.py — drop identifier column, encode Yes/No fields to 0/1
-↓
-train.py — train & compare Logistic Regression (standard + balanced), Random Forest 
-(standard + balanced), XGBoost (standard + balanced)
-(Accuracy, Precision, Recall, F1, ROC-AUC — see experiments.md)
-↓
-explain.py — apply SHAP to best model (Logistic Regression), generate
-global feature importance chart
-↓
-recommend.py — exploratory script validating SHAP-based recommendation logic
-↓
-save_model.py — persist trained model, SHAP explainer, feature columns, and training 
-probability distribution to disk via joblib (avoids retraining on every Flask startup)
-↓
-app.py — load persisted artifacts, wrap in a Flask API for live use
+* Total Users
+* Total Predictions
+* Admin Count
+* Student Count
+* Registered Users Table
+* Recent Predictions Table
 
-**Dataset history:** this project used three dataset iterations before settling on 
-the current one (MBA-specific → CSE-relevant but imbalanced → CSE-relevant and 
-well-balanced). Full rationale for each switch documented in decisions.md.
+---
 
-## Tech Stack
+# Machine Learning Pipeline
+
+The ML pipeline is separate from live prediction flow.
+
+```
+Kaggle Dataset
+(10,000 records)
+
+        ↓
+
+clean.py
+- Remove identifier columns
+- Encode categorical features
+
+        ↓
+
+train.py
+- Logistic Regression
+- Random Forest
+- XGBoost
+- Balanced variants
+
+Evaluation:
+- Accuracy
+- Precision
+- Recall
+- F1 Score
+- ROC-AUC
+
+        ↓
+
+explain.py
+- SHAP explainability
+- Feature importance analysis
+
+        ↓
+
+recommend.py
+- Recommendation validation
+
+        ↓
+
+save_model.py
+
+Stores:
+- Trained model
+- SHAP explainer
+- Feature columns
+- Probability distribution
+
+        ↓
+
+app.py
+
+Flask API Service
+```
+
+Dataset selection history and decisions are documented separately in `decisions.md`.
+
+---
+
+# Technology Stack
 
 | Layer            | Technology                                                       | Status     |
 | ---------------- | ---------------------------------------------------------------- | ---------- |
@@ -174,59 +282,134 @@ well-balanced). Full rationale for each switch documented in decisions.md.
 | Explainability   | SHAP                                                             | ✅ Complete |
 | Visualization    | Recharts                                                         | ✅ Complete |
 
+---
 
-## Why Two Backends
-Node/Express and Flask serve different purposes and are not redundant:
-- **Node/Express**: handles everything app-related — authentication, user data, 
-  MongoDB storage, routing between frontend and services.
-- **Flask**: purpose-built to serve a trained Python ML model. Python's ML ecosystem 
-  (scikit-learn, SHAP) has no equivalent maturity in Node.js, so the model is served 
-  via its own lightweight API rather than reimplemented in JavaScript.
+# Why Two Backends?
 
-This also allows the ML component and full-stack component to be built, tested, and 
-run independently before final integration — Node/React can be developed against the 
-documented API contract using mock data even before the Flask API is complete.
+Node.js/Express and Flask serve different responsibilities.
 
-## Model Details
-- Algorithm: Logistic Regression (selected after comparison with Random Forest, XGBoost, 
-  and class-balanced variants of all three — see experiments.md)
-- Dataset: "Placement Prediction Dataset" (ruchikakumbhar, Kaggle), 10,000 records, 
-  8,000 train / 2,000 test (80/20 split, random_state=42)
-- Features (10): CGPA, Internships, Projects, Workshops/Certifications, 
-  AptitudeTestScore, SoftSkillsRating, ExtracurricularActivities, PlacementTraining, 
-  SSC_Marks, HSC_Marks
-- Test accuracy: 79.45%, ROC-AUC: 0.877
-- Explainability: SHAP (Explainer, applied per-prediction at inference time)
-- Percentile: computed against the saved distribution of all training-set prediction 
-  probabilities, giving relative context alongside the raw probability
+## Node.js + Express
 
-## Auth & Data Model
-- **User model**: name, email (unique), hashed password (bcrypt, 10 salt rounds), 
-  role (student/admin), createdAt
-- **Prediction model**: user (ObjectId reference to User), inputData, probability, 
-  readinessScore, strengths, weaknesses, createdAt
-- JWT tokens signed with a secret stored in `.env` (excluded from git), 7-day expiry
-- Protected routes verified via `middleware/auth.js`, which checks the 
-  `Authorization: Bearer <token>` header
+Handles:
 
-## Frontend Structure (Implemented)
-The frontend was rebuilt from a single-file structure into reusable components.
+* Authentication
+* User management
+* MongoDB operations
+* API routing
+* Frontend communication
 
+## Flask
 
+Handles:
 
-### New folder structure
+* Machine learning inference
+* SHAP explainability
+* Recommendation generation
+
+Python provides a mature ML ecosystem through:
+
+* scikit-learn
+* SHAP
+* pandas
+* numpy
+
+Therefore, the ML model is served through Flask instead of being recreated in JavaScript.
+
+---
+
+# Model Details
+
+* Algorithm: Logistic Regression
+* Dataset: Placement Prediction Dataset
+* Dataset Size: 10,000 records
+* Train/Test Split: 80/20
+* Random State: 42
+
+## Features
+
+1. CGPA
+2. Internships
+3. Projects
+4. Workshops/Certifications
+5. AptitudeTestScore
+6. SoftSkillsRating
+7. ExtracurricularActivities
+8. PlacementTraining
+9. SSC_Marks
+10. HSC_Marks
+
+## Performance
+
+* Accuracy: 79.45%
+* ROC-AUC: 0.877
+
+## Explainability
+
+SHAP is used for:
+
+* Feature contribution analysis
+* Strength identification
+* Weakness detection
+* Personalized recommendations
+
+---
+
+# Authentication & Data Model
+
+## User Model
+
+Contains:
+
+* Name
+* Email
+* Password hash
+* Role
+* Created timestamp
+
+Password security:
+
+* bcrypt hashing
+* 10 salt rounds
+
+---
+
+## Prediction Model
+
+Contains:
+
+* User reference
+* Input data
+* Probability
+* Readiness score
+* Strengths
+* Weaknesses
+* Created timestamp
+
+JWT configuration:
+
+* Secret stored in `.env`
+* 7-day expiry
+* Protected middleware validation
+
+---
+
+# Frontend Structure
+
+The CareerLens AI frontend follows a reusable component-based architecture.
+
+```
 src/
+
+├── assets/
+│
 ├── components/
-│   ├── Admin/
-│   ├── Charts/
+│   ├── Navbar/
 │   ├── Hero/
 │   ├── Features/
-│   ├── Stats/
 │   ├── Workflow/
 │   ├── Technology/
 │   ├── About/
 │   ├── CTA/
-│   ├── Navbar/
 │   ├── StudentForm/
 │   ├── PredictionCard/
 │   ├── RecommendationCard/
@@ -248,47 +431,109 @@ src/
 │
 ├── App.jsx
 └── main.jsx
+```
+
+---
+
+# Branding Structure
+
+CareerLens AI branding includes:
 
 
-### New dependencies
-Framer Motion (animations), Recharts (radar/bar/pie charts), Lucide React (icons) — 
-in addition to existing React, Tailwind CSS, axios, react-router-dom.
+CareerLens AI
+Explainable Career Intelligence
+```
 
-### Design direction
-- Dark theme, background `#0B1020`, accent colors purple (`#8B5CF6`) and cyan (`#06B6D4`)
-- Glassmorphism cards, rounded corners, soft shadows, blur effects
-- Radar chart comparing CGPA/AptitudeTestScore/SoftSkillsRating/SSC_Marks/HSC_Marks/
-  ExtracurricularActivities; bar chart for Internships/Projects/Workshops; pie chart 
-  for Placed/Not Placed probability split
+Clicking the logo or brand text navigates users smoothly to the top of the landing page.
 
-### Design system (implemented)
-- Dark theme, background `#0B1020`, accent colors purple (`#8B5CF6`) and cyan (`#06B6D4`)
-- Glassmorphism cards (`bg-white/[0.03]`, `backdrop-blur-xl`, `border-white/10`)
-- Framer Motion for fade-ins, staggered animations, hover states
-- Recharts for radar/bar/pie charts; custom SVG for the circular probability gauge
-- Smooth scroll + themed scrollbar (purple-to-cyan gradient) via global CSS
-- Public landing page (Hero, Stats, Features, Workflow, About, CTA) separate from 
-  authenticated Dashboard experience
+---
 
-### Routes
-| Path         | Page               | Access             |
-| ------------ | ------------------ | ------------------ |
-| `/`          | Landing Page       | Public             |
-| `/login`     | Login              | Public             |
-| `/signup`    | Signup             | Public             |
-| `/dashboard` | Student Dashboard  | Authenticated User |
-| `/history`   | Prediction History | Authenticated User |
-| `/admin`     | Admin Dashboard    | Admin Only         |
+# Design System
 
+## Theme
 
+* Dark background
+* Purple and cyan accent colors
+* Glassmorphism UI
+* Rounded cards
+* Soft shadows
+* Blur effects
 
+## Colors
 
-### Important correction from initial design spec
-An earlier AI-generated design spec assumed a different API response shape 
-(`prediction`, `placement_probability`, `confidence`, `areas_to_improve`, 
-`recommendations`) that does not match the actual, tested API contract 
-(`probability`, `readiness_score`, `percentile`, `strengths[]`, `weaknesses[]`). 
-The redesign implementation must use the real field names from api-contract.md. 
-A fabricated "confidence" score was also proposed but rejected — Logistic Regression's 
-predict_proba() produces one probability value, not a separate confidence metric, 
-and inventing one would misrepresent the model's actual output.
+Background:
+
+```
+#0B1020
+```
+
+Accent:
+
+```
+Purple: #8B5CF6
+Cyan:   #06B6D4
+```
+
+## UI Features
+
+* Framer Motion animations
+* Recharts visualization
+* Smooth scrolling
+* Custom scrollbar
+* Responsive layouts
+
+---
+
+# Application Routes
+
+| Path         | Page                       | Access        |
+| ------------ | -------------------------- | ------------- |
+| `/`          | CareerLens AI Landing Page | Public        |
+| `/login`     | Login                      | Public        |
+| `/signup`    | Signup                     | Public        |
+| `/dashboard` | Student Dashboard          | Authenticated |
+| `/history`   | Prediction History         | Authenticated |
+| `/admin`     | Admin Dashboard            | Admin Only    |
+
+---
+
+# Important API Correction
+
+The frontend implementation follows the actual API response structure.
+
+Actual response fields:
+
+```json
+{
+ "probability": "",
+ "readiness_score": "",
+ "percentile": "",
+ "strengths": [],
+ "weaknesses": []
+}
+```
+
+Earlier design concepts used:
+
+* prediction
+* confidence
+* placement_probability
+* recommendations
+
+These fields are not used because they do not represent the actual ML API response.
+
+The system avoids generating artificial confidence scores. Logistic Regression provides probability output, which is directly used for placement readiness calculation.
+
+---
+
+# Final Architecture Summary
+
+CareerLens AI combines:
+
+* Modern React frontend
+* Secure Express backend
+* Python-based ML service
+* Explainable AI techniques
+* MongoDB data management
+
+The final system provides students with transparent placement predictions and actionable career improvement recommendations.

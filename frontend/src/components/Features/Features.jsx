@@ -12,16 +12,19 @@ const features = [
 
 function Features() {
   return (
-    <section id="features" className="max-w-6xl mx-auto px-8 py-24">
+    <section id="features" className="max-w-6xl mx-auto px-6 py-24">
+
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-4xl font-bold text-center mb-14"
+        className="text-5xl font-bold text-center mb-16 leading-tight"
       >
         Everything You Need to Understand Your Placement Chances
       </motion.h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
         {features.map((f, i) => (
           <motion.div
             key={i}
@@ -29,16 +32,47 @@ function Features() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.08 }}
-            className="bg-white/[0.03] border border-white/10 rounded-2xl p-7 hover:border-purple-500/40 transition"
+            className="
+              bg-white/[0.03]
+              border border-white/10
+              rounded-2xl
+              p-7
+              min-h-[260px]
+              hover:border-purple-500/40
+              transition
+            "
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center mb-5">
+
+            <div className="
+              w-12 h-12 
+              rounded-xl 
+              bg-gradient-to-br from-purple-500/20 to-cyan-500/20 
+              flex items-center justify-center 
+              mb-6
+            ">
               <f.icon size={22} className="text-purple-400" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-            <p className="text-slate-400 text-base leading-relaxed">{f.desc}</p>
+
+
+            <h3 className="font-semibold text-2xl mb-3">
+              {f.title}
+            </h3>
+
+
+            <p className="
+              text-slate-400 
+              text-lg 
+              leading-7
+              min-h-[84px]
+            ">
+              {f.desc}
+            </p>
+
           </motion.div>
         ))}
+
       </div>
+
     </section>
   );
 }

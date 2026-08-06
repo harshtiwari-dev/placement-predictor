@@ -1,134 +1,177 @@
-# Project Decisions
+# Project Decisions — CareerLens AI
 
 ## SHAP + NumPy Compatibility Issue
 
-Encountered a `TypeError` when running `shap.plots.beeswarm()` due to boolean (`True/False`) columns created during one-hot encoding being incompatible with NumPy's rounding functions in the installed SHAP version.
+During Explainable AI implementation, a `TypeError` was encountered while generating SHAP visualizations using `shap.plots.beeswarm()`.
 
-Resolved by explicitly converting all boolean columns to integer (`0/1`) values inside `clean.py` after encoding.
+The issue occurred because boolean (`True/False`) columns created during encoding were incompatible with NumPy rounding operations in the installed SHAP version.
 
----
+### Resolution
 
-## Two-Backend Architecture (Node.js + Flask)
+All boolean columns were explicitly converted into integer (`0/1`) values inside `clean.py` after preprocessing.
 
-The application uses two independent backend services.
+This ensured compatibility between:
 
-- **Node.js + Express**
-  - Authentication
-  - Authorization
-  - MongoDB operations
-  - API routing
-  - Prediction history
-  - Admin APIs
-  - Communication with Flask
-
-- **Flask**
-  - Loads trained ML model
-  - Generates predictions
-  - Computes SHAP explanations
-  - Returns recommendation data
-
-Python's machine learning ecosystem (scikit-learn, SHAP) is significantly more mature than JavaScript's, making Flask the appropriate choice for serving the ML model instead of attempting to port it into Node.js.
-
-This separation also allowed ML development and backend development to proceed independently before final integration.
+* SHAP
+* NumPy
+* scikit-learn pipeline
 
 ---
 
-## Authentication Strategy
+# Two-Backend Architecture (Node.js + Flask)
 
-Implemented authentication using:
+CareerLens AI uses two independent backend services.
 
-- bcrypt for password hashing (12 salt rounds)
-- JWT tokens with 7-day expiry
-- Express authentication middleware protecting all private routes
+## Node.js + Express Backend
 
-Passwords are never stored in plaintext.
+Responsibilities:
 
-JWT contains:
-
-- user id
-- user role
-
-which are used for authentication and authorization throughout the application.
-
----
-
-## Role-Based Authorization
-
-Instead of maintaining separate applications for administrators and students, the project uses role-based authorization.
-
-Two roles exist:
-
-- student
-- admin
-
-A dedicated `adminMiddleware` checks the decoded JWT and restricts admin-only endpoints.
-
-Admin-only features include:
-
-- View all registered users
-- View all prediction history
-- Dashboard statistics
-
-This approach keeps one authentication system while providing different permissions.
+* Authentication
+* Authorization
+* MongoDB operations
+* API routing
+* Prediction history management
+* Admin APIs
+* Communication with Flask ML service
 
 ---
 
-## Database Naming
+## Flask ML Service
 
-Initially MongoDB connected to the default `test` database because no database name existed inside the connection string.
+Responsibilities:
 
-The URI was updated to explicitly use:
+* Loading trained ML model
+* Generating placement predictions
+* Computing SHAP explanations
+* Generating recommendation insights
 
-`placement-predictor`
+Python's machine learning ecosystem provides mature support through:
 
-This keeps the database structure cleaner and avoids accidental collections inside the default database.
+* scikit-learn
+* SHAP
+* pandas
+* numpy
+
+Therefore, Flask was selected for serving the ML model instead of attempting to recreate the ML pipeline in Node.js.
+
+This separation allowed frontend, backend, and machine learning development to progress independently before final integration.
 
 ---
 
-## Secrets Management
+# Authentication Strategy
 
-Sensitive configuration is stored inside `.env`.
+CareerLens AI implements secure authentication using:
+
+* bcrypt password hashing
+* JWT-based authentication
+* Express authentication middleware
+
+Security decisions:
+
+* Passwords are never stored in plaintext.
+* Sensitive credentials are stored using environment variables.
+* Protected routes require valid JWT authentication.
+
+JWT payload contains:
+
+* User ID
+* User role
+
+These values are used throughout the application for authentication and authorization.
+
+---
+
+# Role-Based Authorization
+
+Instead of maintaining separate applications for students and administrators, CareerLens AI uses role-based authorization.
+
+Available roles:
+
+* `student`
+* `admin`
+
+A dedicated authorization middleware validates user roles and restricts admin-only routes.
+
+Admin features include:
+
+* View registered users
+* View all prediction records
+* Access dashboard statistics
+
+This approach maintains a single authentication system while providing different permission levels.
+
+---
+
+# Database Naming
+
+Initially, MongoDB connected to the default `test` database because no database name was specified.
+
+The connection URI was updated to explicitly use:
+
+```text
+placement-predictor
+```
+
+This provides:
+
+* Cleaner database organization
+* Better separation of project data
+* Reduced risk of accidental collections inside the default database
+
+---
+
+# Secrets Management
+
+Sensitive configuration values are stored inside `.env`.
 
 Examples:
 
-- MongoDB URI
-- JWT Secret
+* MongoDB connection URI
+* JWT secret key
 
 The `.env` file is excluded from Git using `.gitignore`.
 
-Database credentials were rotated after being exposed once during debugging.
+Security practices:
+
+* Secrets are never committed to version control.
+* Database credentials were rotated after accidental exposure during debugging.
 
 ---
 
-## Node ↔ Flask Integration
+# React ↔ Express ↔ Flask Integration
 
-Implemented the following prediction pipeline:
+CareerLens AI follows this prediction pipeline:
 
-React
-
-↓
-
-Express `/api/predict`
+```text
+React Frontend
 
 ↓
 
-JWT verification
+Express /api/predict
 
 ↓
 
-Axios request
+JWT Verification
 
 ↓
 
-Flask `/predict`
+Axios Request
 
 ↓
 
-Machine Learning model
+Flask /predict
 
 ↓
 
-Express stores prediction
+Machine Learning Model
+
+↓
+
+SHAP Explainability
+
+↓
+
+Express Stores Result
 
 ↓
 
@@ -136,215 +179,295 @@ MongoDB
 
 ↓
 
-Frontend response
+Frontend Response
+```
 
-The integration was tested end-to-end and verified successfully.
+The complete pipeline was tested end-to-end successfully.
 
 ---
 
-## Prediction Persistence
+# Prediction Persistence
 
-Every prediction is automatically stored inside MongoDB.
+Every generated prediction is automatically stored in MongoDB.
 
 Each prediction document contains:
 
-- authenticated user id
-- input values
-- probability
-- readiness score
-- strengths
-- weaknesses
-- timestamp
+* Authenticated user ID
+* Student input values
+* Placement probability
+* Readiness score
+* Strengths
+* Weaknesses
+* Timestamp
 
-Predictions are linked to users through a MongoDB ObjectId reference.
+Predictions are linked to users using MongoDB ObjectId references.
 
-This design enabled prediction history without changing the schema later.
+This design enabled the Prediction History feature without requiring schema redesign.
 
 ---
 
-## Prediction History Feature
+# Prediction History Feature
 
-Added a dedicated history page allowing every authenticated student to review previous predictions.
+CareerLens AI includes a dedicated Prediction History module.
 
 Backend endpoint:
 
-GET `/api/predictions/history`
+```text
+GET /api/predictions/history
+```
 
 Features:
 
-- JWT protected
-- returns only current user's predictions
-- sorted newest first
-- excludes raw input data
-
-No schema changes were required because predictions were already linked to users.
+* JWT protected
+* Returns only logged-in user's predictions
+* Sorted newest first
+* Provides historical career readiness insights
 
 ---
 
-## Admin Dashboard
+# Admin Dashboard
 
-Implemented a dedicated administrator dashboard.
+A dedicated administrator dashboard was implemented.
 
-The dashboard displays:
+Dashboard provides:
 
-- Total Users
-- Total Predictions
-- Total Students
-- Total Admins
+* Total Users
+* Total Predictions
+* Student Count
+* Admin Count
 
-It also provides:
+Additional features:
 
-- complete users table
-- complete prediction table
+* Complete users table
+* Complete prediction records table
 
-Only users with the `admin` role can access these endpoints.
+Only users with the `admin` role can access these features.
 
-The frontend additionally hides the Admin Dashboard navigation link for non-admin users.
-
----
-
-## Dataset Switch — MBA Dataset to Engineering Dataset
-
-The original dataset ("Factors Affecting Campus Placement") focused primarily on MBA admissions and placements.
-
-Since the target audience of this project is engineering students, the dataset was replaced with engineering-relevant placement datasets.
-
-This also improves the originality and research value of the project.
+The frontend also hides admin navigation options from non-admin users.
 
 ---
 
-## Dataset Evaluation
+# Dataset Switch — MBA Dataset to Engineering Dataset
 
-Several candidate datasets were evaluated.
+The initial dataset focused mainly on MBA placement factors.
+
+Since CareerLens AI targets engineering students, the dataset was replaced with engineering-relevant placement datasets.
+
+This decision improved:
+
+* Target audience alignment
+* Practical relevance
+* Research applicability
+* Model usefulness
+
+---
+
+# Dataset Evaluation
+
+Multiple datasets were evaluated before selecting the final dataset.
 
 Rejected datasets included:
 
-- deterministic datasets where Random Forest achieved 100% accuracy
-- highly imbalanced datasets producing unrealistic probabilities
-- datasets with weak predictive relationships
+* Deterministic datasets where models achieved unrealistic 100% accuracy
+* Highly imbalanced datasets
+* Datasets producing unreliable probability outputs
+* Datasets with weak predictive relationships
 
-The selected dataset:
+Selected dataset:
 
-**Placement Prediction Dataset (Kaggle — ruchikakumbhar)**
+**Placement Prediction Dataset**
+
+Source:
+
+Kaggle — ruchikakumbhar
 
 Reasons:
 
-- 10,000 records
-- balanced classes
-- realistic feature relationships
-- realistic model accuracy
-- suitable for explainability
+* 10,000 student records
+* Balanced class distribution
+* Engineering-relevant features
+* Realistic model performance
+* Suitable for Explainable AI analysis
 
 ---
 
-## Model Selection
+# Model Selection
 
-Multiple algorithms were compared.
+Multiple machine learning algorithms were compared:
 
-Models evaluated:
+Evaluated models:
 
-- Logistic Regression
-- Random Forest
-- XGBoost
+* Logistic Regression
+* Random Forest
+* XGBoost
 
-Selection metrics:
+Evaluation metrics:
 
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- ROC-AUC
+* Accuracy
+* Precision
+* Recall
+* F1 Score
+* ROC-AUC
 
-Although some tree-based models achieved higher scores on earlier datasets, Logistic Regression was selected because it generalized realistically on the final dataset and produces interpretable probabilities suitable for SHAP explanations.
+Although tree-based models performed well on some datasets, Logistic Regression was selected because:
 
----
-
-## Percentile Ranking
-
-Added a percentile metric alongside prediction probability.
-
-Instead of showing only:
-
-> 58% placement chance
-
-the system also reports how the student compares with the training population.
-
-Percentile is computed using the saved training prediction probability distribution.
-
-This provides additional context without altering the actual model prediction.
+* It produced realistic generalization results.
+* It provides interpretable probability outputs.
+* It works effectively with SHAP explanations.
 
 ---
 
-## Frontend Redesign
+# Percentile Ranking
 
-The frontend was completely redesigned into reusable React components.
+CareerLens AI includes percentile ranking along with prediction probability.
 
-Major improvements include:
+Instead of displaying only:
 
-- Landing Page
-- Dashboard
-- Login
-- Signup
-- History
-- Admin Dashboard
+```text
+58% placement probability
+```
 
-Reusable UI components include:
+the system also provides relative ranking compared with the training population.
 
-- Navbar
-- Student Form
-- Prediction Card
-- Recommendation Card
-- Charts
-- Admin Tables
-- Statistic Cards
+Percentile calculation:
 
-The redesign improves maintainability and makes future feature additions easier.
+* Uses saved training prediction probability distribution.
+* Provides additional context.
+* Does not modify the actual model prediction.
 
 ---
 
-## Dashboard Loading Experience
+# Frontend Redesign
 
-Instead of displaying a blank prediction card while waiting for the ML model, the dashboard now shows a staged loading animation representing the AI pipeline.
+The frontend was redesigned from a simple application structure into a reusable React component architecture.
+
+Implemented modules:
+
+* Landing Page
+* Login
+* Signup
+* Student Dashboard
+* Prediction History
+* Admin Dashboard
+
+Reusable components include:
+
+* Navbar
+* Student Form
+* Prediction Card
+* Recommendation Card
+* Charts
+* Admin Tables
+* Statistic Cards
+
+This improves:
+
+* Maintainability
+* Scalability
+* Future feature development
+
+---
+
+# CareerLens AI Branding Decision
+
+The application branding was updated from a generic placement prediction portal to:
+
+```text
+CareerLens AI
+Explainable Career Intelligence
+```
+
+Branding implementation:
+
+*  BrainCircuit logo
+*  favicon
+* Purple-to-cyan gradient identity
+* Clickable navbar branding
+
+The navbar branding allows users to return to the top of the landing page by clicking:
+
+* Logo
+* CareerLens AI text
+* Brand section
+
+---
+
+# Dashboard Loading Experience
+
+Instead of showing an empty prediction section during ML processing, CareerLens AI provides a staged AI workflow animation.
 
 Stages include:
 
-- Collecting student profile
-- Validating academic records
-- Running ML prediction
-- Applying SHAP explainability
-- Generating recommendations
-- Finalizing results
+1. Collecting student profile
+2. Validating academic information
+3. Running ML prediction
+4. Applying SHAP explainability
+5. Generating recommendations
+6. Finalizing results
 
-This improves perceived responsiveness while accurately representing the prediction workflow.
-
----
-
-## UI Design System
-
-Adopted a consistent dark theme throughout the application.
-
-Design choices:
-
-- Background: `#0B1020`
-- Purple/Cyan gradient accents
-- Glassmorphism cards
-- Framer Motion animations
-- Recharts visualizations
-- Lucide React icons
-
-The goal was to create a modern AI dashboard rather than a traditional academic web application.
+This improves user experience while accurately representing the prediction process.
 
 ---
 
-## Future Deployment Strategy
+# UI Design System
 
-The project is designed for independent deployment of each service.
+CareerLens AI follows a modern AI dashboard design system.
+
+Design decisions:
+
+* Dark theme
+* Glassmorphism cards
+* Purple and cyan accents
+* Framer Motion animations
+* Recharts visualizations
+* Lucide React icons
+
+Theme colors:
+
+```text
+Background:
+#0B1020
+
+Purple:
+#8B5CF6
+
+Cyan:
+#06B6D4
+```
+
+The goal was to create an AI-powered career intelligence platform rather than a traditional academic portal.
+
+---
+
+# Future Deployment Strategy
+
+CareerLens AI is designed for independent service deployment.
 
 Planned deployment:
 
-- React → Vercel
-- Express Backend → Render
-- Flask ML API → Render
-- MongoDB Atlas → Cloud Database
+| Service          | Platform      |
+| ---------------- | ------------- |
+| React Frontend   | Vercel        |
+| Express Backend  | Render        |
+| Flask ML API     | Render        |
+| MongoDB Database | MongoDB Atlas |
 
-This architecture allows each service to scale independently and mirrors production deployment practices used in modern full-stack applications.
+This architecture allows:
+
+* Independent scaling
+* Easier maintenance
+* Production-style deployment workflow
+
+---
+
+# Final Decision Summary
+
+CareerLens AI combines:
+
+* Full-stack web architecture
+* Machine learning prediction
+* Explainable AI
+* Secure authentication
+* Personalized recommendations
+
+The final design prioritizes transparency, scalability, and meaningful career guidance for students.

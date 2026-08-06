@@ -10,20 +10,35 @@ const steps = [
 
 function Workflow() {
   return (
-    <section id="workflow" className="max-w-4xl mx-auto px-8 py-24">
+    <section id="workflow" className="max-w-6xl mx-auto px-6 py-24">
+
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-4xl font-bold text-center mb-16"
+        className="text-5xl font-bold text-center mb-16"
       >
         How It Works
       </motion.h2>
 
-      <div className="relative">
-        <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-purple-500 via-cyan-500 to-transparent" />
 
-        <div className="space-y-12">
+      <div className="relative max-w-4xl mx-auto">
+
+        <div className="
+          absolute 
+          left-6 
+          top-0 
+          bottom-0 
+          w-px 
+          bg-gradient-to-b 
+          from-purple-500 
+          via-cyan-500 
+          to-transparent
+        " />
+
+
+        <div className="space-y-14">
+
           {steps.map((step, i) => (
             <motion.div
               key={i}
@@ -31,19 +46,53 @@ function Workflow() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="relative flex gap-6 items-start"
+              className="relative flex gap-8 items-start"
             >
-              <div className="relative z-10 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/30">
+
+              <div className="
+                relative 
+                z-10 
+                w-12 
+                h-12 
+                rounded-full 
+                bg-gradient-to-br 
+                from-purple-500 
+                to-cyan-500 
+                flex 
+                items-center 
+                justify-center 
+                shrink-0 
+                shadow-lg 
+                shadow-purple-500/30
+              ">
                 <step.icon size={20} />
               </div>
-              <div className="pt-1.5">
-                <h3 className="font-semibold text-xl mb-2">{step.title}</h3>
-                <p className="text-slate-400 text-base leading-relaxed max-w-md">{step.desc}</p>
+
+
+              <div className="pt-1">
+
+                <h3 className="font-semibold text-2xl mb-3">
+                  {step.title}
+                </h3>
+
+                <p className="
+                  text-slate-400
+                  text-lg
+                  leading-7
+                  max-w-xl
+                ">
+                  {step.desc}
+                </p>
+
               </div>
+
             </motion.div>
           ))}
+
         </div>
+
       </div>
+
     </section>
   );
 }

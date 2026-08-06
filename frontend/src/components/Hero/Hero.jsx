@@ -12,56 +12,91 @@ function Hero() {
         <div className="absolute bottom-0 right-20 h-72 w-72 rounded-full bg-cyan-500/20 blur-[120px]" />
       </div>
 
-      <div className="relative w-full max-w-7xl mx-auto px-8 lg:px-12">
 
-        <div className="grid lg:grid-cols-2 gap-24 items-center">
+      <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-8">
+
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+
 
           {/* Left */}
 
           <motion.div
-            initial={{ opacity:0, x:-40 }}
-            animate={{ opacity:1, x:0 }}
-            transition={{ duration:.7 }}
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: .7 }}
           >
 
             <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-8 text-sm text-slate-300">
               <Sparkles size={15}/>
-              Explainable AI Placement Prediction
+              Explainable AI Career Intelligence
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl tracking-tight font-black leading-tight">
 
+            <h1 className="
+              text-5xl 
+              md:text-6xl 
+              lg:text-7xl
+              tracking-tight
+              font-black
+              leading-[1.05]
+            ">
               Predict Your
 
               <span className="block bg-gradient-to-r from-purple-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
-
                 Placement Success
-
               </span>
 
             </h1>
 
-            <p className="mt-8 text-slate-400 text-lg leading-8 max-w-xl">
 
+            <p className="
+              mt-8
+              text-slate-400
+              text-xl
+              leading-8
+              max-w-xl
+            ">
               An AI-powered platform that predicts your placement probability,
               identifies your strengths and weaknesses, and explains every
               prediction using Explainable AI (SHAP).
-
             </p>
+
 
             <div className="mt-10 flex gap-5 flex-wrap">
 
               <Link
                 to="/signup"
-                className="px-7 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 font-semibold flex items-center gap-2 hover:scale-105 transition"
+                className="
+                  px-7
+                  py-4
+                  rounded-xl
+                  bg-gradient-to-r
+                  from-purple-600
+                  to-cyan-500
+                  font-semibold
+                  flex
+                  items-center
+                  gap-2
+                  hover:scale-105
+                  transition
+                "
               >
                 Get Started
                 <ArrowRight size={18}/>
               </Link>
 
+
               <a
                 href="#features"
-                className="px-7 py-4 rounded-xl border border-white/10 hover:bg-white/5 transition"
+                className="
+                  px-7
+                  py-4
+                  rounded-xl
+                  border
+                  border-white/10
+                  hover:bg-white/5
+                  transition
+                "
               >
                 Learn More
               </a>
@@ -70,17 +105,28 @@ function Hero() {
 
           </motion.div>
 
+
+
           {/* Right */}
 
           <motion.div
-            initial={{ opacity:0, x:40 }}
-            animate={{ opacity:1, x:0 }}
-            transition={{ duration:.7 }}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: .7 }}
           >
 
             <div className="relative">
 
-              <div className="rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-8 shadow-2xl">
+              <div className="
+                rounded-3xl
+                bg-white/5
+                border
+                border-white/10
+                backdrop-blur-xl
+                p-8
+                shadow-2xl
+              ">
+
 
                 <div className="flex justify-between items-center">
 
@@ -96,7 +142,18 @@ function Hero() {
 
                   </div>
 
-                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+
+                  <div className="
+                    h-24
+                    w-24
+                    rounded-full
+                    bg-gradient-to-br
+                    from-purple-500
+                    to-cyan-500
+                    flex
+                    items-center
+                    justify-center
+                  ">
 
                     <span className="font-bold text-xl">
                       AI
@@ -106,46 +163,29 @@ function Hero() {
 
                 </div>
 
-                <div className="mt-8 space-y-4">
 
-                  <div>
+                <div className="mt-8 space-y-5">
 
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>CGPA</span>
-                      <span>Excellent</span>
+                  {[
+                    ["CGPA", "Excellent", "w-[88%]", "bg-purple-500"],
+                    ["Communication", "Strong", "w-[74%]", "bg-cyan-400"],
+                    ["Projects", "Needs Improvement", "w-[42%]", "bg-orange-400"],
+                  ].map(([label, status, width, color]) => (
+
+                    <div key={label}>
+
+                      <div className="flex justify-between text-sm mb-2">
+                        <span>{label}</span>
+                        <span>{status}</span>
+                      </div>
+
+                      <div className="h-2 rounded-full bg-slate-700">
+                        <div className={`h-2 rounded-full ${width} ${color}`} />
+                      </div>
+
                     </div>
 
-                    <div className="h-2 rounded-full bg-slate-700">
-                      <div className="w-[88%] h-2 rounded-full bg-purple-500"/>
-                    </div>
-
-                  </div>
-
-                  <div>
-
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Communication</span>
-                      <span>Strong</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-slate-700">
-                      <div className="w-[74%] h-2 rounded-full bg-cyan-400"/>
-                    </div>
-
-                  </div>
-
-                  <div>
-
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Projects</span>
-                      <span>Needs Improvement</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-slate-700">
-                      <div className="w-[42%] h-2 rounded-full bg-orange-400"/>
-                    </div>
-
-                  </div>
+                  ))}
 
                 </div>
 
@@ -154,6 +194,7 @@ function Hero() {
             </div>
 
           </motion.div>
+
 
         </div>
 
