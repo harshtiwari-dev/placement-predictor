@@ -8,71 +8,140 @@ const stack = [
   { name: "Express", category: "Backend" },
   { name: "MongoDB", category: "Database" },
   { name: "Flask", category: "ML API" },
-  { name: "scikit-learn", category: "ML" },
+  { name: "scikit-learn", category: "Machine Learning" },
   { name: "SHAP", category: "Explainability" },
   { name: "JWT + bcrypt", category: "Security" },
 ];
 
+const categories = [
+  "Frontend",
+  "Backend",
+  "Database",
+  "ML API",
+  "Machine Learning",
+  "Explainability",
+  "Security",
+];
+
 function Technology() {
   return (
-    <section id="technology" className="max-w-6xl mx-auto px-6 py-24">
+    <section id="technology" className="py-24">
 
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-5xl font-bold text-center mb-5"
-      >
-        Built With
-      </motion.h2>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
-
-      <p className="
-        text-slate-400
-        text-lg
-        leading-7
-        text-center
-        mb-12
-        max-w-2xl
-        mx-auto
-      ">
-        A full-stack system combining machine learning, explainable AI, and modern web technology.
-      </p>
-
-
-      <div className="flex flex-wrap justify-center gap-4">
-
-        {stack.map((tech, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.05 }}
+        {/* Section Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12"
+        >
+          <h2
             className="
-              bg-white/[0.03]
-              border border-white/10
-              rounded-full
-              px-6
-              py-3
-              flex
-              items-center
-              gap-2
-              hover:border-cyan-500/40
-              transition
+              max-w-4xl
+              text-4xl
+              lg:text-5xl
+              font-bold
+              leading-tight
             "
           >
+            Technology Stack
+          </h2>
 
-            <span className="font-medium text-base">
-              {tech.name}
-            </span>
+          <p
+            className="
+              text-slate-400
+              text-base
+              leading-7
+              mt-4
+              max-w-2xl
+            "
+          >
+            The system combines modern web technologies with machine learning
+            and explainable AI to deliver transparent placement predictions.
+          </p>
+        </motion.div>
 
-            <span className="text-slate-500 text-sm">
-              · {tech.category}
-            </span>
 
-          </motion.div>
-        ))}
+        {/* Technology Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {categories.map((category, categoryIndex) => {
+
+            const technologies = stack.filter(
+              (tech) => tech.category === category
+            );
+
+            if (technologies.length === 0) return null;
+
+            return (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: categoryIndex * 0.08 }}
+                className="
+                  bg-white/[0.03]
+                  border border-white/10
+                  rounded-2xl
+                  p-6
+                  hover:border-cyan-500/30
+                  hover:-translate-y-1
+                  transition
+                "
+              >
+
+                {/* Category */}
+                <h3
+                  className="
+                    text-sm
+                    font-medium
+                    text-cyan-400
+                    uppercase
+                    tracking-wider
+                    mb-4
+                  "
+                >
+                  {category}
+                </h3>
+
+
+                {/* Technologies */}
+                <div className="space-y-3">
+
+                  {technologies.map((tech) => (
+                    <div
+                      key={tech.name}
+                      className="
+                        flex
+                        items-center
+                        justify-between
+                        py-2
+                        border-b
+                        border-white/5
+                        last:border-0
+                      "
+                    >
+
+                      <span className="text-base font-medium">
+                        {tech.name}
+                      </span>
+
+                      <span className="text-sm text-slate-500">
+                        {tech.category}
+                      </span>
+
+                    </div>
+                  ))}
+
+                </div>
+
+              </motion.div>
+            );
+          })}
+
+        </div>
 
       </div>
 

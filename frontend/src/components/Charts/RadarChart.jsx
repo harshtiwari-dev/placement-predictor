@@ -9,7 +9,7 @@ function SkillsRadarChart({ formData }) {
     { subject: "Soft Skills", value: (Number(formData.SoftSkillsRating) / 5) * 100 },
     { subject: "10th %", value: Number(formData.SSC_Marks) },
     { subject: "12th %", value: Number(formData.HSC_Marks) },
-    { subject: "Extracurricular", value: Number(formData.ExtracurricularActivities) * 100 },
+    { subject: "Activities", value: Number(formData.ExtracurricularActivities) * 100 },
   ];
 
   return (
@@ -21,9 +21,13 @@ function SkillsRadarChart({ formData }) {
     >
       <h3 className="text-white font-semibold mb-4">Skills Overview</h3>
       <ResponsiveContainer width="100%" height={280}>
-        <RechartsRadar data={data}>
+        <RechartsRadar
+          data={data}
+          outerRadius="72%"
+          margin={{ top: 8, right: 22, bottom: 8, left: 22 }}
+        >
           <PolarGrid stroke="rgba(255,255,255,0.1)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: "#94A3B8", fontSize: 12 }} />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: "#94A3B8", fontSize: 11 }} />
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#64748B", fontSize: 10 }} />
           <Radar name="Score" dataKey="value" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.35} strokeWidth={2} />
         </RechartsRadar>

@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function Hero() {
   return (
-    <section className="relative min-h-[calc(100vh-80px)] flex items-center overflow-hidden">
+    <section className="relative overflow-hidden pt-28 pb-20 lg:pt-32 lg:pb-24">
 
       {/* Background Glow */}
       <div className="absolute inset-0">
@@ -23,23 +23,25 @@ function Hero() {
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: .7 }}
+            transition={{ duration: 0.7 }}
           >
 
             <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-8 text-sm text-slate-300">
-              <Sparkles size={15}/>
+              <Sparkles size={15} />
               Explainable AI Career Intelligence
             </div>
 
 
-            <h1 className="
-              text-5xl 
-              md:text-6xl 
-              lg:text-7xl
-              tracking-tight
-              font-black
-              leading-[1.05]
-            ">
+            <h1
+              className="
+                text-5xl
+                md:text-6xl
+                lg:text-7xl
+                tracking-tight
+                font-black
+                leading-[1.05]
+              "
+            >
               Predict Your
 
               <span className="block bg-gradient-to-r from-purple-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
@@ -49,13 +51,15 @@ function Hero() {
             </h1>
 
 
-            <p className="
-              mt-8
-              text-slate-400
-              text-xl
-              leading-8
-              max-w-xl
-            ">
+            <p
+              className="
+                mt-8
+                text-slate-400
+                text-xl
+                leading-8
+                max-w-xl
+              "
+            >
               An AI-powered platform that predicts your placement probability,
               identifies your strengths and weaknesses, and explains every
               prediction using Explainable AI (SHAP).
@@ -82,7 +86,7 @@ function Hero() {
                 "
               >
                 Get Started
-                <ArrowRight size={18}/>
+                <ArrowRight size={18} />
               </Link>
 
 
@@ -112,25 +116,32 @@ function Hero() {
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: .7 }}
+            transition={{ duration: 0.7 }}
           >
 
             <div className="relative">
 
-              <div className="
-                rounded-3xl
-                bg-white/5
-                border
-                border-white/10
-                backdrop-blur-xl
-                p-8
-                shadow-2xl
-              ">
+              <div
+                className="
+        rounded-3xl
+        bg-white/5
+        border
+        border-white/10
+        backdrop-blur-xl
+        p-8
+        shadow-2xl
+      "
+              >
 
+                {/* Prediction Header */}
 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-start">
 
                   <div>
+
+                    <p className="text-cyan-400 text-xs font-medium uppercase tracking-wider mb-2">
+                      AI Assessment
+                    </p>
 
                     <p className="text-slate-400 text-sm">
                       Placement Probability
@@ -143,49 +154,85 @@ function Hero() {
                   </div>
 
 
-                  <div className="
-                    h-24
-                    w-24
-                    rounded-full
-                    bg-gradient-to-br
-                    from-purple-500
-                    to-cyan-500
-                    flex
-                    items-center
-                    justify-center
-                  ">
-
+                  <div
+                    className="
+    h-24
+    w-24
+    rounded-full
+    bg-gradient-to-br
+    from-purple-500
+    to-cyan-500
+    flex
+    items-center
+    justify-center
+    gap-1.5
+  "
+                  >
+                    <User size={22} />
                     <span className="font-bold text-xl">
-                      AI
+                     User
                     </span>
+                  </div>
+
+                </div>
+
+
+                {/* Profile Analysis */}
+
+                <div className="mt-8">
+
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-5">
+                    Profile Analysis
+                  </p>
+
+
+                  <div className="space-y-5">
+
+                    {[
+                      ["CGPA", "Excellent", "w-[88%]", "bg-purple-500"],
+                      ["Communication", "Strong", "w-[74%]", "bg-cyan-400"],
+                      ["Projects", "Needs Improvement", "w-[42%]", "bg-orange-400"],
+                    ].map(([label, status, width, color]) => (
+
+                      <div key={label}>
+
+                        <div className="flex justify-between text-sm mb-2">
+
+                          <span className="text-slate-300">
+                            {label}
+                          </span>
+
+                          <span className="text-slate-400">
+                            {status}
+                          </span>
+
+                        </div>
+
+
+                        <div className="h-2 rounded-full bg-slate-700">
+
+                          <div
+                            className={`h-2 rounded-full ${width} ${color}`}
+                          />
+
+                        </div>
+
+                      </div>
+
+                    ))}
 
                   </div>
 
                 </div>
 
 
-                <div className="mt-8 space-y-5">
+                {/* Explanation Hint */}
 
-                  {[
-                    ["CGPA", "Excellent", "w-[88%]", "bg-purple-500"],
-                    ["Communication", "Strong", "w-[74%]", "bg-cyan-400"],
-                    ["Projects", "Needs Improvement", "w-[42%]", "bg-orange-400"],
-                  ].map(([label, status, width, color]) => (
+                <div className="mt-7 pt-5 border-t border-white/10">
 
-                    <div key={label}>
-
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>{label}</span>
-                        <span>{status}</span>
-                      </div>
-
-                      <div className="h-2 rounded-full bg-slate-700">
-                        <div className={`h-2 rounded-full ${width} ${color}`} />
-                      </div>
-
-                    </div>
-
-                  ))}
+                  <p className="text-sm text-slate-500">
+                    Prediction factors analyzed using Explainable AI (SHAP)
+                  </p>
 
                 </div>
 

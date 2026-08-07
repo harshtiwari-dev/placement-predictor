@@ -54,7 +54,7 @@ function StudentForm({ onSubmit, loading }) {
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
           <GraduationCap size={18} className="text-purple-400" /> Academic Details
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>CGPA (out of 10)</label>
             <input type="number" step="0.01" name="CGPA" value={formData.CGPA} onChange={handleChange} required min="0" max="10" className={inputClass} placeholder="e.g. 7.93" />
@@ -74,7 +74,7 @@ function StudentForm({ onSubmit, loading }) {
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
           <Briefcase size={18} className="text-cyan-400" /> Experience
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={labelClass}>Internships</label>
             <input type="number" name="Internships" value={formData.Internships} onChange={handleChange} required min="0" max="2" className={inputClass} />
@@ -94,7 +94,7 @@ function StudentForm({ onSubmit, loading }) {
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
           <Brain size={18} className="text-purple-400" /> Skills
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>Aptitude Test Score (out of 100)</label>
             <input type="number" step="0.01" name="AptitudeTestScore" value={formData.AptitudeTestScore} onChange={handleChange} required min="0" max="100" className={inputClass} placeholder="e.g. 75" />
@@ -111,20 +111,29 @@ function StudentForm({ onSubmit, loading }) {
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
           <Users size={18} className="text-cyan-400" /> Activities
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>Extracurricular Activities</label>
-            <select name="ExtracurricularActivities" value={formData.ExtracurricularActivities} onChange={handleChange} className={inputClass}>
-              <option value="0">No</option>
-              <option value="1">Yes</option>
+            <select name="ExtracurricularActivities" value={formData.ExtracurricularActivities} onChange={handleChange} className={`${inputClass} bg-[#151827] appearance-none`}>
+              <option className="bg-[#151827] text-gray-200" value="0">No</option>
+              <option className="bg-[#151827] text-gray-200" value="1">Yes</option>
             </select>
           </div>
           <div>
             <label className={labelClass}>Placement Training</label>
-            <select name="PlacementTraining" value={formData.PlacementTraining} onChange={handleChange} className={inputClass}>
-              <option value="0">No</option>
-              <option value="1">Yes</option>
-            </select>
+            <select
+  name="PlacementTraining"
+  value={formData.PlacementTraining}
+  onChange={handleChange}
+  className={`${inputClass} bg-[#151827] appearance-none`}
+>
+  <option className="bg-[#151827] text-gray-200" value="0">
+    No
+  </option>
+  <option className="bg-[#151827] text-gray-200" value="1">
+    Yes
+  </option>
+</select>
           </div>
         </div>
       </div>
