@@ -31,6 +31,11 @@ function RecommendationCard({ result }) {
             <CheckCircle2 size={18} /> Strengths
           </h3>
           <div className="space-y-2">
+            {result.strengths.length === 0 && (
+              <div className="bg-amber-500/[0.06] border-l-2 border-amber-500 rounded-lg p-3">
+                <p className="text-white text-sm">No significant strengths detected — there's room to build up your profile across the board.</p>
+              </div>
+            )}
             {result.strengths.map((s, i) => (
               <motion.div
                 key={i}

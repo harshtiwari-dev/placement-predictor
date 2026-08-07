@@ -1,4 +1,3 @@
-import { Navigate } from "react-router-dom";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
@@ -6,6 +5,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
 import History from "./pages/History";
+import AdminRoute from "./AdminRoute";
 
 function App() {
   return (
@@ -15,9 +15,9 @@ function App() {
         <Route
           path="/admin"
           element={
-            JSON.parse(localStorage.getItem("user"))?.role === "admin"
-              ? <AdminDashboard />
-              : <Navigate to="/dashboard" replace />
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
           }
         />
         <Route path="/login" element={<Login />} />
